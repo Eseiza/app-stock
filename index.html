@@ -15,9 +15,7 @@
       <h1>Stock Romero</h1>
       <p>Gestión de inventario · Panificados</p>
     </div>
-
     <div id="error-msg" class="alert alert-error hidden"></div>
-
     <div class="field">
       <input type="email" id="email" placeholder="Email" autocomplete="email" />
     </div>
@@ -31,50 +29,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-  const firebaseConfigStock = {
-    apiKey: "AIzaSyCtMcTuEtRiR05bPQFWcFaXaVfL5hjy-Og",
-    authDomain: "appstock-a009e.firebaseapp.com",
-    projectId: "appstock-a009e",
-    storageBucket: "appstock-a009e.firebasestorage.app",
-    messagingSenderId: "908675947079",
-    appId: "1:908675947079:web:672cc8896eb3ccd015ef62"
-  };
-
-  const appStock = firebase.initializeApp(firebaseConfigStock);
-  const auth = firebase.auth(appStock);
-  const db   = firebase.firestore(appStock);
-
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) return;
-    const doc = await db.collection('usuarios').doc(user.uid).get();
-    if (doc.exists) {
-      window.location.href = doc.data().rol === 'admin' ? 'admin.html' : 'operador.html';
-    }
-  });
-
-  const btn = document.getElementById('btn-login');
-
-  btn.addEventListener('click', async () => {
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const err      = document.getElementById('error-msg');
-    err.classList.add('hidden');
-    btn.textContent = 'Ingresando...';
-    btn.disabled = true;
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
-    } catch (e) {
-      err.textContent = 'Email o contraseña incorrectos.';
-      err.classList.remove('hidden');
-      btn.textContent = 'Ingresar';
-      btn.disabled = false;
-    }
-  });
-
-  document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') btn.click();
-  });
-</script>
+<script src="config.js"></script>
+<script src="login.js"></script>
 </body>
 </html>
