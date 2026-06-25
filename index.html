@@ -3,21 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Romero - Login</title>
+  <title>Stock Romero</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="login-container">
+<div class="login-page">
   <div class="login-card">
-    <div class="logo">
-      <h1>📦 Stock Romero</h1>
-      <p>Panificados</p>
+    <div class="login-brand">
+      <div class="brand-icon">📦</div>
+      <h1>Stock Romero</h1>
+      <p>Gestión de inventario · Panificados</p>
     </div>
-    <div id="error-msg" class="error-msg hidden"></div>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Contraseña" />
-    <button id="btn-login">Ingresar</button>
+
+    <div id="error-msg" class="alert alert-error hidden"></div>
+
+    <div class="field">
+      <input type="email" id="email" placeholder="Email" autocomplete="email" />
+    </div>
+    <div class="field">
+      <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="btn-login">Ingresar</button>
   </div>
 </div>
 
@@ -36,7 +43,7 @@
 
   const appStock = firebase.initializeApp(firebaseConfigStock);
   const auth = firebase.auth(appStock);
-  const db = firebase.firestore(appStock);
+  const db   = firebase.firestore(appStock);
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) return;
@@ -46,21 +53,27 @@
     }
   });
 
-  document.getElementById('btn-login').addEventListener('click', async () => {
-    const email = document.getElementById('email').value.trim();
+  const btn = document.getElementById('btn-login');
+
+  btn.addEventListener('click', async () => {
+    const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const err = document.getElementById('error-msg');
+    const err      = document.getElementById('error-msg');
     err.classList.add('hidden');
+    btn.textContent = 'Ingresando...';
+    btn.disabled = true;
     try {
       await auth.signInWithEmailAndPassword(email, password);
     } catch (e) {
       err.textContent = 'Email o contraseña incorrectos.';
       err.classList.remove('hidden');
+      btn.textContent = 'Ingresar';
+      btn.disabled = false;
     }
   });
 
   document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('btn-login').click();
+    if (e.key === 'Enter') btn.click();
   });
 </script>
 </body>
