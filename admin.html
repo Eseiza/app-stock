@@ -3,62 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Romero - Admin</title>
+  <title>Stock Romero · Admin</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="navbar">
-  <h1>📦 Stock Romero</h1>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="dot">📦</div>
+    <h1>Stock Romero</h1>
+  </div>
   <div class="navbar-right">
-    <span id="user-name"></span>
-    <span style="opacity:0.6;font-size:0.75rem">ADMIN</span>
+    <div class="user-pill">
+      <div class="user-avatar" id="user-avatar">–</div>
+      <div>
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role">Admin</div>
+      </div>
+    </div>
     <button class="btn-logout" id="btn-logout">Salir</button>
   </div>
-</div>
+</nav>
 
+<!-- TABS -->
 <div class="tabs">
-  <button class="tab-btn active" data-tab="stock">Stock actual</button>
-  <button class="tab-btn" data-tab="movimiento">Registrar movimiento</button>
-  <button class="tab-btn" data-tab="historial">Historial</button>
-  <button class="tab-btn" data-tab="usuarios">Usuarios</button>
+  <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
+  <button class="tab-btn" data-tab="movimiento">↕ Movimiento</button>
+  <button class="tab-btn" data-tab="historial">🕓 Historial</button>
+  <button class="tab-btn" data-tab="usuarios">👥 Usuarios</button>
 </div>
 
+<!-- CONTENT -->
 <div class="content">
 
-  <!-- STOCK ACTUAL -->
+  <!-- ── STOCK ACTUAL ── -->
   <div class="tab-panel active" id="tab-stock">
+    <div id="stats-row" class="stats-row"></div>
     <div class="card">
-      <h2>Stock actual</h2>
-      <div id="stock-loading" class="loading">Cargando productos...</div>
-      <table id="stock-table" class="hidden">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Producto</th>
-            <th>Unidad</th>
-            <th>Stock</th>
-            <th>Última actualización</th>
-            <th>Ajuste manual</th>
-          </tr>
-        </thead>
-        <tbody id="stock-tbody"></tbody>
-      </table>
+      <div class="card-header">
+        <div>
+          <h2>Stock actual</h2>
+          <div class="card-sub">Los ajustes manuales quedan registrados en el historial</div>
+        </div>
+      </div>
+      <div id="stock-loading" class="empty-state">
+        <div class="empty-icon">⏳</div><p>Cargando productos...</p>
+      </div>
+      <div class="table-wrap">
+        <table id="stock-table" class="hidden">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Unidad</th>
+              <th>Stock</th>
+              <th>Última actualización</th>
+              <th>Ajuste manual</th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- REGISTRAR MOVIMIENTO -->
+  <!-- ── MOVIMIENTO ── -->
   <div class="tab-panel" id="tab-movimiento">
     <div class="card">
-      <h2>Registrar movimiento</h2>
+      <div class="card-header"><h2>Registrar movimiento</h2></div>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" style="min-width:220px">
           <label>Producto</label>
-          <select id="mov-producto">
-            <option value="">Seleccioná un producto...</option>
-          </select>
+          <select id="mov-producto"><option value="">Seleccioná un producto...</option></select>
         </div>
-        <div class="form-group" style="max-width:160px">
+        <div class="form-group" style="max-width:170px">
           <label>Tipo</label>
           <select id="mov-tipo">
             <option value="entrada">↑ Entrada</option>
@@ -69,23 +87,25 @@
           <label>Cantidad</label>
           <input type="number" id="mov-cantidad" min="1" placeholder="0" />
         </div>
-        <div class="form-group" style="justify-content:flex-end;flex:0">
+        <div class="form-group" style="flex:0;min-width:auto">
+          <label style="opacity:0">_</label>
           <button class="btn btn-primary" id="btn-registrar">Registrar</button>
         </div>
       </div>
-      <div id="mov-error" class="error-msg hidden"></div>
-      <div id="mov-info" class="info-msg hidden"></div>
+      <div id="mov-stock-actual" class="alert alert-info hidden"></div>
+      <div id="mov-error"  class="alert alert-error hidden"></div>
+      <div id="mov-ok"     class="alert alert-ok hidden"></div>
     </div>
   </div>
 
-  <!-- HISTORIAL -->
+  <!-- ── HISTORIAL ── -->
   <div class="tab-panel" id="tab-historial">
     <div class="card">
-      <h2>Historial de movimientos</h2>
-      <div class="form-row" style="margin-bottom:16px">
+      <div class="card-header"><h2>Historial de movimientos</h2></div>
+      <div class="form-row" style="margin-bottom:20px">
         <div class="form-group">
-          <label>Filtrar por producto</label>
-          <select id="hist-filtro-producto"><option value="">Todos</option></select>
+          <label>Producto</label>
+          <select id="hist-filtro-prod"><option value="">Todos</option></select>
         </div>
         <div class="form-group" style="max-width:160px">
           <label>Tipo</label>
@@ -97,25 +117,27 @@
           </select>
         </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha/Hora</th>
-            <th>Producto</th>
-            <th>Tipo</th>
-            <th>Cantidad</th>
-            <th>Usuario</th>
-          </tr>
-        </thead>
-        <tbody id="hist-tbody"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha / hora</th>
+              <th>Producto</th>
+              <th>Tipo</th>
+              <th>Cantidad</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- USUARIOS -->
+  <!-- ── USUARIOS ── -->
   <div class="tab-panel" id="tab-usuarios">
     <div class="card">
-      <h2>Crear usuario</h2>
+      <div class="card-header"><h2>Crear usuario</h2></div>
       <div class="form-row">
         <div class="form-group">
           <label>Nombre</label>
@@ -123,9 +145,9 @@
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" id="usr-email" placeholder="email@romero.com" />
+          <input type="email" id="usr-email" placeholder="correo@romero.com" />
         </div>
-        <div class="form-group" style="max-width:160px">
+        <div class="form-group" style="max-width:170px">
           <label>Contraseña</label>
           <input type="password" id="usr-password" placeholder="••••••" />
         </div>
@@ -136,20 +158,23 @@
             <option value="admin">Admin</option>
           </select>
         </div>
-        <div class="form-group" style="flex:0;justify-content:flex-end">
+        <div class="form-group" style="flex:0;min-width:auto">
+          <label style="opacity:0">_</label>
           <button class="btn btn-primary" id="btn-crear-usuario">Crear</button>
         </div>
       </div>
-      <div id="usr-error" class="error-msg hidden" style="margin-top:12px"></div>
+      <div id="usr-error" class="alert alert-error hidden" style="margin-top:14px"></div>
     </div>
     <div class="card">
-      <h2>Usuarios</h2>
-      <table>
-        <thead>
-          <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acción</th></tr>
-        </thead>
-        <tbody id="usr-tbody"></tbody>
-      </table>
+      <div class="card-header"><h2>Usuarios</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acción</th></tr>
+          </thead>
+          <tbody id="usr-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -162,11 +187,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script>
 // ============================================================
-// ⚠️ AJUSTAR: nombre de colección y campos en romero-env
+// ⚠️ AJUSTAR cuando puedas entrar a Firebase de romero-env
 const COLECCION_PRODUCTOS = 'productos';
-const CAMPO_NOMBRE  = 'nombre';
-const CAMPO_CODIGO  = 'codigo';
-const CAMPO_UNIDAD  = 'unidad';
+const CAMPO_NOMBRE        = 'nombre';
+const CAMPO_CODIGO        = 'codigo';
+const CAMPO_UNIDAD        = 'unidad';
 // ============================================================
 
 const firebaseConfigEnvase = {
@@ -193,12 +218,12 @@ const dbEnvase  = firebase.firestore(appEnvase);
 const dbStock   = firebase.firestore(appStock);
 const auth      = firebase.auth(appStock);
 
-let currentUser = null;
-let productos   = [];
-let stockData   = {};
+let currentUser      = null;
+let productos        = [];
+let stockData        = {};
 let todosMovimientos = [];
 
-// ---- AUTH GUARD ----
+// ── AUTH GUARD ──
 auth.onAuthStateChanged(async (user) => {
   if (!user) { window.location.href = 'index.html'; return; }
   const doc = await dbStock.collection('usuarios').doc(user.uid).get();
@@ -206,12 +231,13 @@ auth.onAuthStateChanged(async (user) => {
     await auth.signOut(); window.location.href = 'index.html'; return;
   }
   currentUser = { uid: user.uid, ...doc.data() };
-  document.getElementById('user-name').textContent = currentUser.nombre;
+  document.getElementById('user-name').textContent   = currentUser.nombre;
+  document.getElementById('user-avatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
   await cargarProductos();
   iniciarListeners();
 });
 
-// ---- TABS ----
+// ── TABS ──
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -221,12 +247,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ---- LOGOUT ----
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await auth.signOut(); window.location.href = 'index.html';
 });
 
-// ---- CARGAR PRODUCTOS (romero-env) ----
+// ── CARGAR PRODUCTOS ──
 async function cargarProductos() {
   try {
     const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
@@ -239,52 +264,85 @@ async function cargarProductos() {
     poblarSelects();
     await cargarStock();
   } catch (e) {
-    document.getElementById('stock-loading').textContent =
-      '⚠️ Error al cargar productos. Verificá el nombre de la colección (' + COLECCION_PRODUCTOS + ') en Firestore.';
+    document.getElementById('stock-loading').innerHTML =
+      `<div class="empty-icon">⚠️</div><p>Error al cargar productos.<br><small>Verificá la colección <strong>${COLECCION_PRODUCTOS}</strong> en Firestore de romero-env.</small></p>`;
     console.error(e);
   }
 }
 
 function poblarSelects() {
-  ['mov-producto', 'hist-filtro-producto'].forEach(id => {
+  ['mov-producto', 'hist-filtro-prod'].forEach(id => {
     const sel = document.getElementById(id);
-    const firstOpt = sel.options[0];
+    const first = sel.options[0];
     sel.innerHTML = '';
-    sel.appendChild(firstOpt);
+    sel.appendChild(first);
     productos.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = (p.codigo ? p.codigo + ' — ' : '') + p.nombre;
+      opt.textContent = (p.codigo ? p.codigo + ' · ' : '') + p.nombre;
       sel.appendChild(opt);
     });
   });
 }
 
-// ---- CARGAR STOCK (appstock-a009e) ----
+// ── CARGAR STOCK ──
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData = {};
   snap.docs.forEach(doc => { stockData[doc.id] = doc.data(); });
   renderStockTable();
+  renderStats();
+}
+
+function renderStats() {
+  const total   = productos.length;
+  const sinStock = productos.filter(p => (stockData[p.id]?.cantidad ?? 0) <= 0).length;
+  const conStock = total - sinStock;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-chip">
+      <div class="stat-label">Productos</div>
+      <div class="stat-value">${total}</div>
+    </div>
+    <div class="stat-chip green">
+      <div class="stat-label">Con stock</div>
+      <div class="stat-value">${conStock}</div>
+    </div>
+    <div class="stat-chip red">
+      <div class="stat-label">Sin stock</div>
+      <div class="stat-value">${sinStock}</div>
+    </div>
+  `;
 }
 
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
   tbody.innerHTML = '';
+  if (!productos.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-row">Sin productos</td></tr>';
+    return;
+  }
   productos.forEach(p => {
-    const s = stockData[p.id] || {};
-    const qty = s.cantidad ?? 0;
-    const fecha = s.ultimaActualizacion ? formatFecha(s.ultimaActualizacion.toDate()) : '—';
-    const tr = document.createElement('tr');
+    const s    = stockData[p.id] || {};
+    const qty  = s.cantidad ?? 0;
+    const cls  = qty > 0 ? 'qty-ok' : qty === 0 ? 'qty-zero' : 'qty-low';
+    const fecha = s.ultimaActualizacion ? fmt(s.ultimaActualizacion.toDate()) : '—';
+    const tr   = document.createElement('tr');
     tr.innerHTML = `
-      <td>${p.codigo || '—'}</td>
-      <td><strong>${p.nombre}</strong></td>
-      <td>${p.unidad || '—'}</td>
-      <td><span class="stock-qty ${qty <= 0 ? 'stock-low' : 'stock-ok'}">${qty}</span></td>
-      <td style="font-size:0.8rem;color:#888">${fecha}</td>
       <td>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="number" class="qty-input" id="adj-${p.id}" value="${qty}" min="0" />
+        <div class="product-name">${p.nombre}</div>
+        ${p.codigo ? `<div class="product-code">${p.codigo}</div>` : ''}
+      </td>
+      <td>${p.unidad || '—'}</td>
+      <td>
+        <div class="qty-display ${cls}">
+          <span class="qty-number">${qty}</span>
+          ${p.unidad ? `<span class="qty-unit">${p.unidad}</span>` : ''}
+        </div>
+      </td>
+      <td style="color:var(--muted);font-size:12.5px">${fecha}</td>
+      <td>
+        <div class="adj-row">
+          <input type="number" class="adj-input" id="adj-${p.id}" value="${qty}" min="0" />
           <button class="btn btn-warning btn-sm" onclick="ajustarStock('${p.id}')">Ajustar</button>
         </div>
       </td>
@@ -295,40 +353,48 @@ function renderStockTable() {
   document.getElementById('stock-table').classList.remove('hidden');
 }
 
-// ---- AJUSTE MANUAL (admin) ----
+// ── AJUSTE MANUAL ──
 window.ajustarStock = async function(productoId) {
-  const p = productos.find(x => x.id === productoId);
-  const input = document.getElementById('adj-' + productoId);
+  const p      = productos.find(x => x.id === productoId);
+  const input  = document.getElementById('adj-' + productoId);
   const cantidad = parseInt(input.value);
   if (isNaN(cantidad) || cantidad < 0) { showToast('Cantidad inválida'); return; }
-
   const ahora = firebase.firestore.Timestamp.fromDate(new Date());
   const batch = dbStock.batch();
-
   batch.set(dbStock.collection('stock').doc(productoId), {
     nombre: p.nombre, codigo: p.codigo, unidad: p.unidad,
     cantidad, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre,
-    tipo: 'ajuste', cantidad, fecha: ahora,
+    productoId, productoNombre: p.nombre, tipo: 'ajuste',
+    cantidad, fecha: ahora,
     usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
   });
   await batch.commit();
-
   stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad, ultimaActualizacion: ahora };
   renderStockTable();
-  showToast(`Stock de "${p.nombre}" ajustado a ${cantidad}`);
+  renderStats();
+  showToast(`"${p.nombre}" → ${cantidad} ${p.unidad}`);
 };
 
-// ---- REGISTRAR MOVIMIENTO ----
+// ── MOVIMIENTO ──
+document.getElementById('mov-producto').addEventListener('change', () => {
+  const id  = document.getElementById('mov-producto').value;
+  const div = document.getElementById('mov-stock-actual');
+  if (!id) { div.classList.add('hidden'); return; }
+  const p   = productos.find(x => x.id === id);
+  const qty = stockData[id]?.cantidad ?? 0;
+  div.textContent = `Stock actual de "${p.nombre}": ${qty} ${p.unidad}`;
+  div.classList.remove('hidden');
+});
+
 document.getElementById('btn-registrar').addEventListener('click', async () => {
   const productoId = document.getElementById('mov-producto').value;
   const tipo       = document.getElementById('mov-tipo').value;
   const cantidad   = parseInt(document.getElementById('mov-cantidad').value);
   const errDiv     = document.getElementById('mov-error');
-  const infoDiv    = document.getElementById('mov-info');
-  errDiv.classList.add('hidden'); infoDiv.classList.add('hidden');
+  const okDiv      = document.getElementById('mov-ok');
+  errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
   if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
   if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
@@ -350,78 +416,76 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
     cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre,
-    tipo, cantidad, fecha: ahora,
+    productoId, productoNombre: p.nombre, tipo, cantidad, fecha: ahora,
     usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
   });
   await batch.commit();
 
   stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora };
-  renderStockTable();
+  renderStockTable(); renderStats();
   document.getElementById('mov-cantidad').value = '';
+  document.getElementById('mov-stock-actual').classList.add('hidden');
   showToast(`${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada`);
-  infoDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
-  infoDiv.classList.remove('hidden');
+  okDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
+  okDiv.classList.remove('hidden');
 });
 
-// ---- HISTORIAL (listener tiempo real) ----
+// ── HISTORIAL (realtime) ──
 function iniciarListeners() {
   dbStock.collection('movimientos').orderBy('fecha', 'desc').limit(300)
     .onSnapshot(snap => {
       todosMovimientos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderHistorial();
     });
-
   dbStock.collection('usuarios')
     .onSnapshot(snap => renderUsuarios(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 }
 
 function renderHistorial() {
-  const filtroProd = document.getElementById('hist-filtro-producto').value;
-  const filtroTipo = document.getElementById('hist-filtro-tipo').value;
-  const filtrados  = todosMovimientos.filter(m => {
-    if (filtroProd && m.productoId !== filtroProd) return false;
-    if (filtroTipo && m.tipo !== filtroTipo) return false;
+  const fp = document.getElementById('hist-filtro-prod').value;
+  const ft = document.getElementById('hist-filtro-tipo').value;
+  const rows = todosMovimientos.filter(m => {
+    if (fp && m.productoId !== fp) return false;
+    if (ft && m.tipo !== ft) return false;
     return true;
   });
-
   const tbody = document.getElementById('hist-tbody');
   tbody.innerHTML = '';
-  if (!filtrados.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Sin movimientos</td></tr>'; return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-row">Sin movimientos</td></tr>'; return;
   }
-  filtrados.forEach(m => {
+  const labels = { entrada: '↑ Entrada', salida: '↓ Salida', ajuste: '⚙ Ajuste' };
+  rows.forEach(m => {
     const tr = document.createElement('tr');
-    const label = m.tipo === 'entrada' ? '↑ Entrada' : m.tipo === 'salida' ? '↓ Salida' : '⚙ Ajuste';
     tr.innerHTML = `
-      <td style="font-size:0.82rem">${m.fecha ? formatFecha(m.fecha.toDate()) : '—'}</td>
-      <td>${m.productoNombre}</td>
-      <td><span class="badge badge-${m.tipo}">${label}</span></td>
-      <td>${m.cantidad}</td>
-      <td style="font-size:0.82rem;color:#888">${m.usuarioNombre || '—'}</td>
+      <td style="font-size:12.5px;color:var(--muted)">${m.fecha ? fmt(m.fecha.toDate()) : '—'}</td>
+      <td class="product-name">${m.productoNombre}</td>
+      <td><span class="badge badge-${m.tipo}">${labels[m.tipo] || m.tipo}</span></td>
+      <td style="font-weight:700">${m.cantidad}</td>
+      <td style="font-size:12.5px;color:var(--muted)">${m.usuarioNombre || '—'}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-document.getElementById('hist-filtro-producto').addEventListener('change', renderHistorial);
+document.getElementById('hist-filtro-prod').addEventListener('change', renderHistorial);
 document.getElementById('hist-filtro-tipo').addEventListener('change', renderHistorial);
 
-// ---- USUARIOS ----
+// ── USUARIOS ──
 function renderUsuarios(usuarios) {
   const tbody = document.getElementById('usr-tbody');
   tbody.innerHTML = '';
   if (!usuarios.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Sin usuarios</td></tr>'; return;
+    tbody.innerHTML = '<tr><td colspan="4" class="loading-row">Sin usuarios</td></tr>'; return;
   }
   usuarios.forEach(u => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${u.nombre}</td>
-      <td style="font-size:0.85rem">${u.email}</td>
+      <td class="product-name">${u.nombre}</td>
+      <td style="font-size:12.5px;color:var(--muted)">${u.email}</td>
       <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
       <td>
-        <button class="btn btn-grey btn-sm" onclick="cambiarRol('${u.id}','${u.rol === 'admin' ? 'operador' : 'admin'}')">
+        <button class="btn btn-ghost btn-sm" onclick="cambiarRol('${u.id}','${u.rol === 'admin' ? 'operador' : 'admin'}')">
           → ${u.rol === 'admin' ? 'operador' : 'admin'}
         </button>
       </td>
@@ -442,21 +506,15 @@ document.getElementById('btn-crear-usuario').addEventListener('click', async () 
   const rol      = document.getElementById('usr-rol').value;
   const errDiv   = document.getElementById('usr-error');
   errDiv.classList.add('hidden');
-
   if (!nombre || !email || !password) {
     errDiv.textContent = 'Completá todos los campos.'; errDiv.classList.remove('hidden'); return;
   }
-
   try {
-    // App temporal para no cerrar sesión del admin actual
-    const tempName = 'temp_' + Date.now();
-    const appTemp  = firebase.initializeApp(firebaseConfigStock, tempName);
+    const appTemp  = firebase.initializeApp(firebaseConfigStock, 'temp_' + Date.now());
     const authTemp = firebase.auth(appTemp);
     const cred     = await authTemp.createUserWithEmailAndPassword(email, password);
     await dbStock.collection('usuarios').doc(cred.user.uid).set({ nombre, email, rol });
     await authTemp.signOut();
-    await appTemp.delete();
-
     ['usr-nombre','usr-email','usr-password'].forEach(id => document.getElementById(id).value = '');
     showToast(`Usuario "${nombre}" creado`);
   } catch (e) {
@@ -464,8 +522,8 @@ document.getElementById('btn-crear-usuario').addEventListener('click', async () 
   }
 });
 
-// ---- UTILS ----
-function formatFecha(date) {
+// ── UTILS ──
+function fmt(date) {
   return date.toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
@@ -474,7 +532,7 @@ function formatFecha(date) {
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.textContent = '✓ ' + msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
