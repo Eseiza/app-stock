@@ -3,57 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Romero - Operador</title>
+  <title>Stock Romero · Operador</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="navbar">
-  <h1>📦 Stock Romero</h1>
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="dot">📦</div>
+    <h1>Stock Romero</h1>
+  </div>
   <div class="navbar-right">
-    <span id="user-name"></span>
+    <div class="user-pill">
+      <div class="user-avatar" id="user-avatar">–</div>
+      <div>
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role">Operador</div>
+      </div>
+    </div>
     <button class="btn-logout" id="btn-logout">Salir</button>
   </div>
-</div>
+</nav>
 
 <div class="tabs">
-  <button class="tab-btn active" data-tab="stock">Stock actual</button>
-  <button class="tab-btn" data-tab="movimiento">Registrar movimiento</button>
+  <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
+  <button class="tab-btn" data-tab="movimiento">↕ Movimiento</button>
 </div>
 
 <div class="content">
 
-  <!-- STOCK ACTUAL (solo lectura) -->
+  <!-- STOCK ACTUAL -->
   <div class="tab-panel active" id="tab-stock">
     <div class="card">
-      <h2>Stock actual</h2>
-      <div id="stock-loading" class="loading">Cargando productos...</div>
-      <table id="stock-table" class="hidden">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Producto</th>
-            <th>Unidad</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody id="stock-tbody"></tbody>
-      </table>
+      <div class="card-header"><h2>Stock actual</h2></div>
+      <div id="stock-loading" class="empty-state">
+        <div class="empty-icon">⏳</div><p>Cargando productos...</p>
+      </div>
+      <div class="table-wrap">
+        <table id="stock-table" class="hidden">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Unidad</th>
+              <th>Stock</th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- REGISTRAR MOVIMIENTO -->
+  <!-- MOVIMIENTO -->
   <div class="tab-panel" id="tab-movimiento">
     <div class="card">
-      <h2>Registrar movimiento</h2>
+      <div class="card-header"><h2>Registrar movimiento</h2></div>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" style="min-width:220px">
           <label>Producto</label>
-          <select id="mov-producto">
-            <option value="">Seleccioná un producto...</option>
-          </select>
+          <select id="mov-producto"><option value="">Seleccioná un producto...</option></select>
         </div>
-        <div class="form-group" style="max-width:160px">
+        <div class="form-group" style="max-width:170px">
           <label>Tipo</label>
           <select id="mov-tipo">
             <option value="entrada">↑ Entrada</option>
@@ -64,12 +74,14 @@
           <label>Cantidad</label>
           <input type="number" id="mov-cantidad" min="1" placeholder="0" />
         </div>
-        <div class="form-group" style="flex:0;justify-content:flex-end">
+        <div class="form-group" style="flex:0;min-width:auto">
+          <label style="opacity:0">_</label>
           <button class="btn btn-primary" id="btn-registrar">Registrar</button>
         </div>
       </div>
-      <div id="mov-error" class="error-msg hidden"></div>
-      <div id="mov-info" class="info-msg hidden"></div>
+      <div id="mov-stock-actual" class="alert alert-info hidden"></div>
+      <div id="mov-error"        class="alert alert-error hidden"></div>
+      <div id="mov-ok"           class="alert alert-ok hidden"></div>
     </div>
   </div>
 
@@ -82,11 +94,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script>
 // ============================================================
-// ⚠️ AJUSTAR: nombre de colección y campos en romero-env
+// ⚠️ AJUSTAR cuando puedas entrar a Firebase de romero-env
 const COLECCION_PRODUCTOS = 'productos';
-const CAMPO_NOMBRE  = 'nombre';
-const CAMPO_CODIGO  = 'codigo';
-const CAMPO_UNIDAD  = 'unidad';
+const CAMPO_NOMBRE        = 'nombre';
+const CAMPO_CODIGO        = 'codigo';
+const CAMPO_UNIDAD        = 'unidad';
 // ============================================================
 
 const firebaseConfigEnvase = {
@@ -117,19 +129,19 @@ let currentUser = null;
 let productos   = [];
 let stockData   = {};
 
-// ---- AUTH GUARD ----
+// ── AUTH GUARD ──
 auth.onAuthStateChanged(async (user) => {
   if (!user) { window.location.href = 'index.html'; return; }
   const doc = await dbStock.collection('usuarios').doc(user.uid).get();
   if (!doc.exists) { await auth.signOut(); window.location.href = 'index.html'; return; }
-  // Admin que entra acá → redirigir a admin.html
   if (doc.data().rol === 'admin') { window.location.href = 'admin.html'; return; }
   currentUser = { uid: user.uid, ...doc.data() };
-  document.getElementById('user-name').textContent = currentUser.nombre;
+  document.getElementById('user-name').textContent   = currentUser.nombre;
+  document.getElementById('user-avatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
   await cargarProductos();
 });
 
-// ---- TABS ----
+// ── TABS ──
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -139,12 +151,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ---- LOGOUT ----
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await auth.signOut(); window.location.href = 'index.html';
 });
 
-// ---- CARGAR PRODUCTOS ----
+// ── CARGAR PRODUCTOS ──
 async function cargarProductos() {
   try {
     const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
@@ -154,24 +165,22 @@ async function cargarProductos() {
       codigo: doc.data()[CAMPO_CODIGO] || '',
       unidad: doc.data()[CAMPO_UNIDAD] || ''
     }));
-
     const sel = document.getElementById('mov-producto');
     productos.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = (p.codigo ? p.codigo + ' — ' : '') + p.nombre;
+      opt.textContent = (p.codigo ? p.codigo + ' · ' : '') + p.nombre;
       sel.appendChild(opt);
     });
-
     await cargarStock();
   } catch (e) {
-    document.getElementById('stock-loading').textContent =
-      '⚠️ Error al cargar productos. Verificá la colección en Firestore.';
+    document.getElementById('stock-loading').innerHTML =
+      `<div class="empty-icon">⚠️</div><p>Error al cargar productos.</p>`;
     console.error(e);
   }
 }
 
-// ---- CARGAR STOCK ----
+// ── CARGAR STOCK ──
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData = {};
@@ -184,12 +193,20 @@ function renderStockTable() {
   tbody.innerHTML = '';
   productos.forEach(p => {
     const qty = stockData[p.id]?.cantidad ?? 0;
-    const tr = document.createElement('tr');
+    const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
+    const tr  = document.createElement('tr');
     tr.innerHTML = `
-      <td>${p.codigo || '—'}</td>
-      <td><strong>${p.nombre}</strong></td>
+      <td>
+        <div class="product-name">${p.nombre}</div>
+        ${p.codigo ? `<div class="product-code">${p.codigo}</div>` : ''}
+      </td>
       <td>${p.unidad || '—'}</td>
-      <td><span class="stock-qty ${qty <= 0 ? 'stock-low' : 'stock-ok'}">${qty}</span></td>
+      <td>
+        <div class="qty-display ${cls}">
+          <span class="qty-number">${qty}</span>
+          ${p.unidad ? `<span class="qty-unit">${p.unidad}</span>` : ''}
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -197,14 +214,24 @@ function renderStockTable() {
   document.getElementById('stock-table').classList.remove('hidden');
 }
 
-// ---- REGISTRAR MOVIMIENTO ----
+// ── MOVIMIENTO ──
+document.getElementById('mov-producto').addEventListener('change', () => {
+  const id  = document.getElementById('mov-producto').value;
+  const div = document.getElementById('mov-stock-actual');
+  if (!id) { div.classList.add('hidden'); return; }
+  const p   = productos.find(x => x.id === id);
+  const qty = stockData[id]?.cantidad ?? 0;
+  div.textContent = `Stock actual de "${p.nombre}": ${qty} ${p.unidad}`;
+  div.classList.remove('hidden');
+});
+
 document.getElementById('btn-registrar').addEventListener('click', async () => {
   const productoId = document.getElementById('mov-producto').value;
   const tipo       = document.getElementById('mov-tipo').value;
   const cantidad   = parseInt(document.getElementById('mov-cantidad').value);
   const errDiv     = document.getElementById('mov-error');
-  const infoDiv    = document.getElementById('mov-info');
-  errDiv.classList.add('hidden'); infoDiv.classList.add('hidden');
+  const okDiv      = document.getElementById('mov-ok');
+  errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
   if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
   if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
@@ -226,8 +253,7 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
     cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre,
-    tipo, cantidad, fecha: ahora,
+    productoId, productoNombre: p.nombre, tipo, cantidad, fecha: ahora,
     usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
   });
   await batch.commit();
@@ -235,15 +261,15 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora };
   renderStockTable();
   document.getElementById('mov-cantidad').value = '';
+  document.getElementById('mov-stock-actual').classList.add('hidden');
   showToast(`${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada`);
-  infoDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
-  infoDiv.classList.remove('hidden');
+  okDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
+  okDiv.classList.remove('hidden');
 });
 
-// ---- UTILS ----
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.textContent = '✓ ' + msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
