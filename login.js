@@ -1,30 +1,30 @@
-auth.onAuthStateChanged(async (user) => {
-  if (!user) return;
-  const doc = await dbStock.collection('usuarios').doc(user.uid).get();
-  if (!doc.exists) return;
-  const rol = doc.data().rol;
-  if (rol === 'admin')  window.location.href = 'admin.html';
-  if (rol === 'carga')  window.location.href = 'carga.html';
-  if (rol === 'visor')  window.location.href = 'visor.html';
-});
+// Si ya hay sesión activa, redirigir
+const sesionActiva = getSession();
+if (sesionActiva) {
+  const dest = sesionActiva.rol === 'admin' ? 'admin.html'
+             : sesionActiva.rol === 'carga' ? 'carga.html' : 'visor.html';
+  window.location.href = dest;
+}
 
 const btn = document.getElementById('btn-login');
 
-btn.addEventListener('click', async () => {
-  const email    = document.getElementById('email').value.trim();
+btn.addEventListener('click', () => {
+  const usuario  = document.getElementById('usuario').value.trim().toLowerCase();
   const password = document.getElementById('password').value;
   const err      = document.getElementById('error-msg');
   err.classList.add('hidden');
-  btn.textContent = 'Ingresando...';
-  btn.disabled = true;
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch (e) {
-    err.textContent = 'Email o contraseña incorrectos.';
+
+  const user = USUARIOS.find(u => u.usuario === usuario && u.password === password);
+
+  if (!user) {
+    err.textContent = 'Usuario o contraseña incorrectos.';
     err.classList.remove('hidden');
-    btn.textContent = 'Ingresar';
-    btn.disabled = false;
+    return;
   }
+
+  setSession(user);
+  window.location.href = user.rol === 'admin' ? 'admin.html'
+                       : user.rol === 'carga'  ? 'carga.html' : 'visor.html';
 });
 
 document.getElementById('password').addEventListener('keydown', e => {
