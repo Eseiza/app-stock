@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Romero · Visor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="dot">📦</div>
+    <h1>Stock Romero</h1>
+  </div>
+  <div class="navbar-right">
+    <div class="user-pill">
+      <div class="user-avatar" id="user-avatar">–</div>
+      <div>
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role">Visor</div>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">Salir</button>
+  </div>
+</nav>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
+  <button class="tab-btn" data-tab="historial">🕓 Historial</button>
+</div>
+
+<div class="content">
+
+  <!-- STOCK -->
+  <div class="tab-panel active" id="tab-stock">
+    <div class="card">
+      <div class="card-header"><h2>Stock actual</h2></div>
+      <div id="stock-loading" class="empty-state">
+        <div class="empty-icon">⏳</div><p>Cargando productos...</p>
+      </div>
+      <div class="table-wrap">
+        <table id="stock-table" class="hidden">
+          <thead>
+            <tr><th>Producto</th><th>Unidad</th><th>Stock</th></tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="tab-panel" id="tab-historial">
+    <div class="card">
+      <div class="card-header"><h2>Historial de movimientos</h2></div>
+      <div class="form-row" style="margin-bottom:20px">
+        <div class="form-group">
+          <label>Producto</label>
+          <select id="hist-filtro-prod"><option value="">Todos</option></select>
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label>Tipo</label>
+          <select id="hist-filtro-tipo">
+            <option value="">Todos</option>
+            <option value="entrada">Entrada</option>
+            <option value="salida">Salida</option>
+            <option value="ajuste">Ajuste</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha / hora</th>
+              <th>Producto</th>
+              <th>Tipo</th>
+              <th>Cantidad</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script src="visor.js"></script>
+</body>
+</html>
