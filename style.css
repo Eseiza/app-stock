@@ -328,3 +328,6 @@ select { cursor: pointer; }
   .stats-row { flex-direction: column; }
   .user-role { display: none; }
 }
+
+.badge-carga { background: var(--success-soft); color: var(--success); }
+.badge-visor { background: var(--warn-soft);    color: var(--warn); }
