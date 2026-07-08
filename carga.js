@@ -5,7 +5,6 @@ document.getElementById('user-name').textContent   = currentUser;
 document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
 document.getElementById('btn-logout').addEventListener('click', logout);
 
-let productos = [];
 let stockData = {};
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -17,89 +16,87 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-cargarProductos();
+// Iniciar cascada
+initCascada('mov-marca', 'mov-linea', 'mov-producto');
 
-async function cargarProductos() {
-  try {
-    const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
-    productos = snap.docs.map(doc => ({
-      id:     doc.id,
-      nombre: doc.data()[CAMPO_NOMBRE] || '(sin nombre)',
-      codigo: doc.data()[CAMPO_CODIGO] || '',
-      unidad: doc.data()[CAMPO_UNIDAD] || ''
-    }));
-    const sel = document.getElementById('mov-producto');
-    productos.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = (p.codigo ? p.codigo + ' · ' : '') + p.nombre;
-      sel.appendChild(opt);
-    });
-    await cargarStock();
-  } catch (e) {
-    document.getElementById('stock-loading').innerHTML =
-      `<div class="empty-icon">⚠️</div><p>Error al cargar productos.</p>`;
-    console.error(e);
-  }
-}
+// Mostrar stock actual al elegir producto
+document.getElementById('mov-producto').addEventListener('change', () => {
+  const key = getKey();
+  const div = document.getElementById('mov-stock-actual');
+  if (!key) { div.classList.add('hidden'); return; }
+  const qty = stockData[key]?.cantidad ?? 0;
+  div.textContent = `Stock actual: ${qty}`;
+  div.classList.remove('hidden');
+});
+
+cargarStock();
 
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData  = {};
   snap.docs.forEach(doc => { stockData[doc.id] = doc.data(); });
   renderStockTable();
+  document.getElementById('stock-loading').classList.add('hidden');
+  document.getElementById('stock-table').classList.remove('hidden');
+}
+
+// La key del documento de stock es "Marca|Línea|Producto"
+function getKey() {
+  const marca    = document.getElementById('mov-marca').value;
+  const linea    = document.getElementById('mov-linea').value;
+  const producto = document.getElementById('mov-producto').value;
+  if (!marca || !linea || !producto) return null;
+  return `${marca}|${linea}|${producto}`;
 }
 
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
   tbody.innerHTML = '';
-  productos.forEach(p => {
-    const qty = stockData[p.id]?.cantidad ?? 0;
-    const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
-    const tr  = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="product-name">${p.nombre}</div>
-        ${p.codigo ? `<div class="product-code">${p.codigo}</div>` : ''}
-      </td>
-      <td>${p.unidad || '—'}</td>
-      <td>
-        <div class="qty-display ${cls}">
-          <span class="qty-number">${qty}</span>
-          ${p.unidad ? `<span class="qty-unit">${p.unidad}</span>` : ''}
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  // Armar filas desde el catálogo
+  Object.entries(CATALOGO).forEach(([marca, lineas]) => {
+    Object.entries(lineas).forEach(([linea, productos]) => {
+      productos.forEach(prod => {
+        const key = `${marca}|${linea}|${prod}`;
+        const qty = stockData[key]?.cantidad ?? 0;
+        const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
+        const tr  = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${marca}</td>
+          <td>${linea}</td>
+          <td class="product-name">${prod}</td>
+          <td>
+            <div class="qty-display ${cls}">
+              <span class="qty-number">${qty}</span>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
   });
-  document.getElementById('stock-loading').classList.add('hidden');
-  document.getElementById('stock-table').classList.remove('hidden');
 }
 
-document.getElementById('mov-producto').addEventListener('change', () => {
-  const id  = document.getElementById('mov-producto').value;
-  const div = document.getElementById('mov-stock-actual');
-  if (!id) { div.classList.add('hidden'); return; }
-  const p   = productos.find(x => x.id === id);
-  div.textContent = `Stock actual de "${p.nombre}": ${stockData[id]?.cantidad ?? 0} ${p.unidad}`;
-  div.classList.remove('hidden');
-});
-
 document.getElementById('btn-registrar').addEventListener('click', async () => {
-  const productoId = document.getElementById('mov-producto').value;
-  const cantidad   = parseInt(document.getElementById('mov-cantidad').value);
-  const errDiv     = document.getElementById('mov-error');
-  const okDiv      = document.getElementById('mov-ok');
+  const marca    = document.getElementById('mov-marca').value;
+  const linea    = document.getElementById('mov-linea').value;
+  const producto = document.getElementById('mov-producto').value;
+  const cantidad = parseInt(document.getElementById('mov-cantidad').value);
+  const errDiv   = document.getElementById('mov-error');
+  const okDiv    = document.getElementById('mov-ok');
   errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
-  if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
-  if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
+  if (!marca || !linea || !producto) {
+    errDiv.textContent = 'Seleccioná marca, línea y producto.'; errDiv.classList.remove('hidden'); return;
+  }
+  if (!cantidad || cantidad <= 0) {
+    errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return;
+  }
 
-  const p           = productos.find(x => x.id === productoId);
-  const stockActual = stockData[productoId]?.cantidad ?? 0;
+  const key         = `${marca}|${linea}|${producto}`;
+  const stockActual = stockData[key]?.cantidad ?? 0;
 
   if (cantidad > stockActual) {
-    errDiv.textContent = `Stock insuficiente. Stock actual: ${stockActual} ${p.unidad}`;
+    errDiv.textContent = `Stock insuficiente. Stock actual: ${stockActual}`;
     errDiv.classList.remove('hidden'); return;
   }
 
@@ -107,21 +104,20 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   const ahora      = firebase.firestore.Timestamp.fromDate(new Date());
   const batch      = dbStock.batch();
 
-  batch.set(dbStock.collection('stock').doc(productoId), {
-    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad,
-    cantidad: nuevoStock, ultimaActualizacion: ahora
+  batch.set(dbStock.collection('stock').doc(key), {
+    marca, linea, producto, cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo: 'salida',
+    marca, linea, producto, tipo: 'salida',
     cantidad, fecha: ahora, usuario: currentUser
   });
   await batch.commit();
 
-  stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora };
+  stockData[key] = { marca, linea, producto, cantidad: nuevoStock, ultimaActualizacion: ahora };
   renderStockTable();
   document.getElementById('mov-cantidad').value = '';
   document.getElementById('mov-stock-actual').classList.add('hidden');
   showToast('Salida registrada');
-  okDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
+  okDiv.textContent = `Nuevo stock de "${producto}": ${nuevoStock}`;
   okDiv.classList.remove('hidden');
 });
