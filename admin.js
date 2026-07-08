@@ -5,7 +5,6 @@ document.getElementById('user-name').textContent   = currentUser;
 document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
 document.getElementById('btn-logout').addEventListener('click', logout);
 
-let productos        = [];
 let stockData        = {};
 let todosMovimientos = [];
 
@@ -20,42 +19,28 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ── INIT ──────────────────────────────────────────────────────
-cargarProductos().then(iniciarListeners);
+initCascada('mov-marca', 'mov-linea', 'mov-producto');
 
-async function cargarProductos() {
-  try {
-    const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
-    productos = snap.docs.map(doc => ({
-      id:     doc.id,
-      nombre: doc.data()[CAMPO_NOMBRE] || '(sin nombre)',
-      codigo: doc.data()[CAMPO_CODIGO] || '',
-      unidad: doc.data()[CAMPO_UNIDAD] || ''
-    }));
-    poblarSelects();
-    await cargarStock();
-  } catch (e) {
-    document.getElementById('stock-loading').innerHTML =
-      `<div class="empty-icon">⚠️</div><p>Error al cargar productos.<br>
-       <small>Verificá la colección <strong>${COLECCION_PRODUCTOS}</strong> en Firestore de romero-env.</small></p>`;
-    console.error(e);
-  }
-}
+// Poblar filtro marca historial
+Object.keys(CATALOGO).forEach(marca => {
+  const opt = document.createElement('option');
+  opt.value = marca; opt.textContent = marca;
+  document.getElementById('hist-filtro-marca').appendChild(opt);
+});
 
-function poblarSelects() {
-  ['mov-producto', 'hist-filtro-prod'].forEach(id => {
-    const sel   = document.getElementById(id);
-    const first = sel.options[0];
-    sel.innerHTML = '';
-    sel.appendChild(first);
-    productos.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = (p.codigo ? p.codigo + ' · ' : '') + p.nombre;
-      sel.appendChild(opt);
-    });
-  });
-}
+// Mostrar stock al elegir producto
+document.getElementById('mov-producto').addEventListener('change', () => {
+  const key = getKey('mov-marca', 'mov-linea', 'mov-producto');
+  const div = document.getElementById('mov-stock-actual');
+  if (!key) { div.classList.add('hidden'); return; }
+  const qty = stockData[key]?.cantidad ?? 0;
+  div.textContent = `Stock actual: ${qty}`;
+  div.classList.remove('hidden');
+});
 
+cargarStock().then(iniciarListeners);
+
+// ── STOCK ─────────────────────────────────────────────────────
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData  = {};
@@ -64,17 +49,30 @@ async function cargarStock() {
   renderStats();
 }
 
+function getKey(idMarca, idLinea, idProducto) {
+  const marca    = document.getElementById(idMarca).value;
+  const linea    = document.getElementById(idLinea).value;
+  const producto = document.getElementById(idProducto).value;
+  if (!marca || !linea || !producto) return null;
+  return `${marca}|${linea}|${producto}`;
+}
+
 function renderStats() {
-  const total    = productos.length;
-  const sinStock = productos.filter(p => (stockData[p.id]?.cantidad ?? 0) <= 0).length;
+  const todas     = [];
+  Object.entries(CATALOGO).forEach(([marca, lineas]) => {
+    Object.entries(lineas).forEach(([linea, prods]) => {
+      prods.forEach(prod => todas.push(`${marca}|${linea}|${prod}`));
+    });
+  });
+  const sinStock = todas.filter(k => (stockData[k]?.cantidad ?? 0) <= 0).length;
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-chip gold">
       <div class="stat-label">Productos</div>
-      <div class="stat-value">${total}</div>
+      <div class="stat-value">${todas.length}</div>
     </div>
     <div class="stat-chip success">
       <div class="stat-label">Con stock</div>
-      <div class="stat-value">${total - sinStock}</div>
+      <div class="stat-value">${todas.length - sinStock}</div>
     </div>
     <div class="stat-chip danger">
       <div class="stat-label">Sin stock</div>
@@ -86,106 +84,104 @@ function renderStats() {
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
   tbody.innerHTML = '';
-  if (!productos.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Sin productos</td></tr>'; return;
-  }
-  productos.forEach(p => {
-    const s     = stockData[p.id] || {};
-    const qty   = s.cantidad ?? 0;
-    const cls   = qty > 0 ? 'qty-ok' : 'qty-zero';
-    const fecha = s.ultimaActualizacion ? fmt(s.ultimaActualizacion.toDate()) : '—';
-    const tr    = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="product-name">${p.nombre}</div>
-        ${p.codigo ? `<div class="product-code">${p.codigo}</div>` : ''}
-      </td>
-      <td>${p.unidad || '—'}</td>
-      <td>
-        <div class="qty-display ${cls}">
-          <span class="qty-number">${qty}</span>
-          ${p.unidad ? `<span class="qty-unit">${p.unidad}</span>` : ''}
-        </div>
-      </td>
-      <td style="color:var(--muted);font-size:12.5px">${fecha}</td>
-      <td>
-        <div class="adj-row">
-          <input type="number" class="adj-input" id="adj-${p.id}" value="${qty}" min="0" />
-          <button class="btn btn-gold btn-sm" onclick="ajustarStock('${p.id}')">Ajustar</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  Object.entries(CATALOGO).forEach(([marca, lineas]) => {
+    Object.entries(lineas).forEach(([linea, productos]) => {
+      productos.forEach(prod => {
+        const key   = `${marca}|${linea}|${prod}`;
+        const s     = stockData[key] || {};
+        const qty   = s.cantidad ?? 0;
+        const cls   = qty > 0 ? 'qty-ok' : 'qty-zero';
+        const fecha = s.ultimaActualizacion ? fmt(s.ultimaActualizacion.toDate()) : '—';
+        const tr    = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${marca}</td>
+          <td>${linea}</td>
+          <td class="product-name">${prod}</td>
+          <td>
+            <div class="qty-display ${cls}">
+              <span class="qty-number">${qty}</span>
+            </div>
+          </td>
+          <td style="color:var(--muted);font-size:12.5px">${fecha}</td>
+          <td>
+            <div class="adj-row">
+              <input type="number" class="adj-input" id="adj-${CSS.escape(key)}" value="${qty}" min="0" />
+              <button class="btn btn-gold btn-sm" onclick="ajustarStock('${key.replace(/'/g,"\\'")}')">Ajustar</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
   });
   document.getElementById('stock-loading').classList.add('hidden');
   document.getElementById('stock-table').classList.remove('hidden');
 }
 
-window.ajustarStock = async function(productoId) {
-  const p        = productos.find(x => x.id === productoId);
-  const cantidad = parseInt(document.getElementById('adj-' + productoId).value);
+window.ajustarStock = async function(key) {
+  const parts    = key.split('|');
+  const [marca, linea, producto] = parts;
+  const input    = document.querySelector(`[id="adj-${key}"]`);
+  const cantidad = parseInt(input.value);
   if (isNaN(cantidad) || cantidad < 0) { showToast('Cantidad inválida'); return; }
   const ahora = firebase.firestore.Timestamp.fromDate(new Date());
   const batch = dbStock.batch();
-  batch.set(dbStock.collection('stock').doc(productoId), {
-    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad, ultimaActualizacion: ahora
+  batch.set(dbStock.collection('stock').doc(key), {
+    marca, linea, producto, cantidad, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo: 'ajuste', cantidad, fecha: ahora,
-    usuario: currentUser
+    marca, linea, producto, tipo: 'ajuste', cantidad, fecha: ahora, usuario: currentUser
   });
   await batch.commit();
-  stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad, ultimaActualizacion: ahora };
+  stockData[key] = { marca, linea, producto, cantidad, ultimaActualizacion: ahora };
   renderStockTable(); renderStats();
-  showToast(`"${p.nombre}" → ${cantidad} ${p.unidad}`);
+  showToast(`"${producto}" → ${cantidad}`);
 };
 
 // ── MOVIMIENTO ────────────────────────────────────────────────
-document.getElementById('mov-producto').addEventListener('change', () => {
-  const id  = document.getElementById('mov-producto').value;
-  const div = document.getElementById('mov-stock-actual');
-  if (!id) { div.classList.add('hidden'); return; }
-  const p   = productos.find(x => x.id === id);
-  div.textContent = `Stock actual de "${p.nombre}": ${stockData[id]?.cantidad ?? 0} ${p.unidad}`;
-  div.classList.remove('hidden');
-});
-
 document.getElementById('btn-registrar').addEventListener('click', async () => {
-  const productoId = document.getElementById('mov-producto').value;
-  const tipo       = document.getElementById('mov-tipo').value;
-  const cantidad   = parseInt(document.getElementById('mov-cantidad').value);
-  const errDiv     = document.getElementById('mov-error');
-  const okDiv      = document.getElementById('mov-ok');
+  const marca    = document.getElementById('mov-marca').value;
+  const linea    = document.getElementById('mov-linea').value;
+  const producto = document.getElementById('mov-producto').value;
+  const tipo     = document.getElementById('mov-tipo').value;
+  const cantidad = parseInt(document.getElementById('mov-cantidad').value);
+  const errDiv   = document.getElementById('mov-error');
+  const okDiv    = document.getElementById('mov-ok');
   errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
-  if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
-  if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
+  if (!marca || !linea || !producto) {
+    errDiv.textContent = 'Seleccioná marca, línea y producto.'; errDiv.classList.remove('hidden'); return;
+  }
+  if (!cantidad || cantidad <= 0) {
+    errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return;
+  }
 
-  const p           = productos.find(x => x.id === productoId);
-  const stockActual = stockData[productoId]?.cantidad ?? 0;
+  const key         = `${marca}|${linea}|${producto}`;
+  const stockActual = stockData[key]?.cantidad ?? 0;
 
   if (tipo === 'salida' && cantidad > stockActual) {
-    errDiv.textContent = `Stock insuficiente. Stock actual: ${stockActual} ${p.unidad}`;
+    errDiv.textContent = `Stock insuficiente. Stock actual: ${stockActual}`;
     errDiv.classList.remove('hidden'); return;
   }
 
   const nuevoStock = tipo === 'entrada' ? stockActual + cantidad : stockActual - cantidad;
   const ahora      = firebase.firestore.Timestamp.fromDate(new Date());
   const batch      = dbStock.batch();
-  batch.set(dbStock.collection('stock').doc(productoId), {
-    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora
+
+  batch.set(dbStock.collection('stock').doc(key), {
+    marca, linea, producto, cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo, cantidad, fecha: ahora, usuario: currentUser
+    marca, linea, producto, tipo, cantidad, fecha: ahora, usuario: currentUser
   });
   await batch.commit();
 
-  stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora };
+  stockData[key] = { marca, linea, producto, cantidad: nuevoStock, ultimaActualizacion: ahora };
   renderStockTable(); renderStats();
   document.getElementById('mov-cantidad').value = '';
   document.getElementById('mov-stock-actual').classList.add('hidden');
   showToast(`${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada`);
-  okDiv.textContent = `Nuevo stock de "${p.nombre}": ${nuevoStock} ${p.unidad}`;
+  okDiv.textContent = `Nuevo stock de "${producto}": ${nuevoStock}`;
   okDiv.classList.remove('hidden');
 });
 
@@ -196,13 +192,14 @@ function iniciarListeners() {
       todosMovimientos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderHistorial();
     });
+  renderUsuarios();
 }
 
 function renderHistorial() {
-  const fp     = document.getElementById('hist-filtro-prod').value;
+  const fm     = document.getElementById('hist-filtro-marca').value;
   const ft     = document.getElementById('hist-filtro-tipo').value;
   const rows   = todosMovimientos.filter(m => {
-    if (fp && m.productoId !== fp) return false;
+    if (fm && m.marca !== fm) return false;
     if (ft && m.tipo !== ft) return false;
     return true;
   });
@@ -210,13 +207,15 @@ function renderHistorial() {
   const labels = { entrada: '↑ Entrada', salida: '↓ Salida', ajuste: '⚙ Ajuste' };
   tbody.innerHTML = '';
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Sin movimientos</td></tr>'; return;
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Sin movimientos</td></tr>'; return;
   }
   rows.forEach(m => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-size:12.5px;color:var(--muted)">${m.fecha ? fmt(m.fecha.toDate()) : '—'}</td>
-      <td class="product-name">${m.productoNombre}</td>
+      <td>${m.marca || '—'}</td>
+      <td>${m.linea || '—'}</td>
+      <td class="product-name">${m.producto || m.productoNombre || '—'}</td>
       <td><span class="badge badge-${m.tipo}">${labels[m.tipo] || m.tipo}</span></td>
       <td style="font-weight:700">${m.cantidad}</td>
       <td style="font-size:12.5px;color:var(--muted)">${m.usuario || '—'}</td>
@@ -225,5 +224,25 @@ function renderHistorial() {
   });
 }
 
-document.getElementById('hist-filtro-prod').addEventListener('change', renderHistorial);
+document.getElementById('hist-filtro-marca').addEventListener('change', renderHistorial);
 document.getElementById('hist-filtro-tipo').addEventListener('change', renderHistorial);
+
+// ── USUARIOS (solo lectura) ───────────────────────────────────
+const USUARIOS_LISTA = [
+  { usuario: 'admin', rol: 'admin' },
+  { usuario: 'carga', rol: 'carga' },
+  { usuario: 'visor', rol: 'visor' },
+];
+
+function renderUsuarios() {
+  const tbody = document.getElementById('usr-tbody');
+  tbody.innerHTML = '';
+  USUARIOS_LISTA.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="product-name">${u.usuario}</td>
+      <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
