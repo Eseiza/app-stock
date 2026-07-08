@@ -5,7 +5,6 @@ document.getElementById('user-name').textContent   = currentUser;
 document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
 document.getElementById('btn-logout').addEventListener('click', logout);
 
-let productos        = [];
 let stockData        = {};
 let todosMovimientos = [];
 
@@ -18,63 +17,48 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-cargarProductos().then(iniciarListeners);
+// Poblar filtro marca
+Object.keys(CATALOGO).forEach(marca => {
+  const opt = document.createElement('option');
+  opt.value = marca; opt.textContent = marca;
+  document.getElementById('hist-filtro-marca').appendChild(opt);
+});
 
-async function cargarProductos() {
-  try {
-    const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
-    productos = snap.docs.map(doc => ({
-      id:     doc.id,
-      nombre: doc.data()[CAMPO_NOMBRE] || '(sin nombre)',
-      codigo: doc.data()[CAMPO_CODIGO] || '',
-      unidad: doc.data()[CAMPO_UNIDAD] || ''
-    }));
-    const sel = document.getElementById('hist-filtro-prod');
-    productos.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = (p.codigo ? p.codigo + ' · ' : '') + p.nombre;
-      sel.appendChild(opt);
-    });
-    await cargarStock();
-  } catch (e) {
-    document.getElementById('stock-loading').innerHTML =
-      `<div class="empty-icon">⚠️</div><p>Error al cargar productos.</p>`;
-    console.error(e);
-  }
-}
+cargarStock().then(iniciarListeners);
 
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData  = {};
   snap.docs.forEach(doc => { stockData[doc.id] = doc.data(); });
   renderStockTable();
+  document.getElementById('stock-loading').classList.add('hidden');
+  document.getElementById('stock-table').classList.remove('hidden');
 }
 
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
   tbody.innerHTML = '';
-  productos.forEach(p => {
-    const qty = stockData[p.id]?.cantidad ?? 0;
-    const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
-    const tr  = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="product-name">${p.nombre}</div>
-        ${p.codigo ? `<div class="product-code">${p.codigo}</div>` : ''}
-      </td>
-      <td>${p.unidad || '—'}</td>
-      <td>
-        <div class="qty-display ${cls}">
-          <span class="qty-number">${qty}</span>
-          ${p.unidad ? `<span class="qty-unit">${p.unidad}</span>` : ''}
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  Object.entries(CATALOGO).forEach(([marca, lineas]) => {
+    Object.entries(lineas).forEach(([linea, productos]) => {
+      productos.forEach(prod => {
+        const key = `${marca}|${linea}|${prod}`;
+        const qty = stockData[key]?.cantidad ?? 0;
+        const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
+        const tr  = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${marca}</td>
+          <td>${linea}</td>
+          <td class="product-name">${prod}</td>
+          <td>
+            <div class="qty-display ${cls}">
+              <span class="qty-number">${qty}</span>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
   });
-  document.getElementById('stock-loading').classList.add('hidden');
-  document.getElementById('stock-table').classList.remove('hidden');
 }
 
 function iniciarListeners() {
@@ -86,10 +70,10 @@ function iniciarListeners() {
 }
 
 function renderHistorial() {
-  const fp     = document.getElementById('hist-filtro-prod').value;
+  const fm     = document.getElementById('hist-filtro-marca').value;
   const ft     = document.getElementById('hist-filtro-tipo').value;
   const rows   = todosMovimientos.filter(m => {
-    if (fp && m.productoId !== fp) return false;
+    if (fm && m.marca !== fm) return false;
     if (ft && m.tipo !== ft) return false;
     return true;
   });
@@ -97,13 +81,15 @@ function renderHistorial() {
   const labels = { entrada: '↑ Entrada', salida: '↓ Salida', ajuste: '⚙ Ajuste' };
   tbody.innerHTML = '';
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Sin movimientos</td></tr>'; return;
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Sin movimientos</td></tr>'; return;
   }
   rows.forEach(m => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-size:12.5px;color:var(--muted)">${m.fecha ? fmt(m.fecha.toDate()) : '—'}</td>
-      <td class="product-name">${m.productoNombre}</td>
+      <td>${m.marca || '—'}</td>
+      <td>${m.linea || '—'}</td>
+      <td class="product-name">${m.producto || m.productoNombre || '—'}</td>
       <td><span class="badge badge-${m.tipo}">${labels[m.tipo] || m.tipo}</span></td>
       <td style="font-weight:700">${m.cantidad}</td>
       <td style="font-size:12.5px;color:var(--muted)">${m.usuario || '—'}</td>
@@ -112,5 +98,5 @@ function renderHistorial() {
   });
 }
 
-document.getElementById('hist-filtro-prod').addEventListener('change', renderHistorial);
+document.getElementById('hist-filtro-marca').addEventListener('change', renderHistorial);
 document.getElementById('hist-filtro-tipo').addEventListener('change', renderHistorial);
