@@ -45,14 +45,15 @@
         </div>
       </div>
       <div id="stock-loading" class="empty-state">
-        <div class="empty-icon">⏳</div><p>Cargando productos...</p>
+        <div class="empty-icon">⏳</div><p>Cargando...</p>
       </div>
       <div class="table-wrap">
         <table id="stock-table" class="hidden">
           <thead>
             <tr>
+              <th>Marca</th>
+              <th>Línea</th>
               <th>Producto</th>
-              <th>Unidad</th>
               <th>Stock</th>
               <th>Última actualización</th>
               <th>Ajuste manual</th>
@@ -69,18 +70,26 @@
     <div class="card">
       <div class="card-header"><h2>Registrar movimiento</h2></div>
       <div class="form-row">
-        <div class="form-group" style="min-width:220px">
-          <label>Producto</label>
-          <select id="mov-producto"><option value="">Seleccioná un producto...</option></select>
+        <div class="form-group" style="max-width:180px">
+          <label>Marca</label>
+          <select id="mov-marca"><option value="">Seleccioná marca...</option></select>
         </div>
-        <div class="form-group" style="max-width:170px">
+        <div class="form-group" style="max-width:180px">
+          <label>Línea</label>
+          <select id="mov-linea"><option value="">Seleccioná línea...</option></select>
+        </div>
+        <div class="form-group" style="max-width:200px">
+          <label>Producto</label>
+          <select id="mov-producto"><option value="">Seleccioná producto...</option></select>
+        </div>
+        <div class="form-group" style="max-width:140px">
           <label>Tipo</label>
           <select id="mov-tipo">
             <option value="entrada">↑ Entrada</option>
             <option value="salida">↓ Salida</option>
           </select>
         </div>
-        <div class="form-group" style="max-width:130px">
+        <div class="form-group" style="max-width:120px">
           <label>Cantidad</label>
           <input type="number" id="mov-cantidad" min="1" placeholder="0" />
         </div>
@@ -100,9 +109,9 @@
     <div class="card">
       <div class="card-header"><h2>Historial de movimientos</h2></div>
       <div class="form-row" style="margin-bottom:20px">
-        <div class="form-group">
-          <label>Producto</label>
-          <select id="hist-filtro-prod"><option value="">Todos</option></select>
+        <div class="form-group" style="max-width:180px">
+          <label>Marca</label>
+          <select id="hist-filtro-marca"><option value="">Todas</option></select>
         </div>
         <div class="form-group" style="max-width:160px">
           <label>Tipo</label>
@@ -119,6 +128,8 @@
           <thead>
             <tr>
               <th>Fecha / hora</th>
+              <th>Marca</th>
+              <th>Línea</th>
               <th>Producto</th>
               <th>Tipo</th>
               <th>Cantidad</th>
@@ -131,43 +142,14 @@
     </div>
   </div>
 
-  <!-- USUARIOS -->
+  <!-- USUARIOS (solo lectura) -->
   <div class="tab-panel" id="tab-usuarios">
-    <div class="card">
-      <div class="card-header"><h2>Crear usuario</h2></div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Nombre</label>
-          <input type="text" id="usr-nombre" placeholder="Nombre completo" />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="usr-email" placeholder="correo@romero.com" />
-        </div>
-        <div class="form-group" style="max-width:170px">
-          <label>Contraseña</label>
-          <input type="password" id="usr-password" placeholder="••••••" />
-        </div>
-        <div class="form-group" style="max-width:140px">
-          <label>Rol</label>
-          <select id="usr-rol">
-            <option value="operador">Operador</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex:0;min-width:auto">
-          <label style="opacity:0">_</label>
-          <button class="btn btn-primary" id="btn-crear-usuario">Crear</button>
-        </div>
-      </div>
-      <div id="usr-error" class="alert alert-error hidden" style="margin-top:14px"></div>
-    </div>
     <div class="card">
       <div class="card-header"><h2>Usuarios</h2></div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acción</th></tr>
+            <tr><th>Usuario</th><th>Rol</th></tr>
           </thead>
           <tbody id="usr-tbody"></tbody>
         </table>
@@ -183,6 +165,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
+<script src="marcas.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
