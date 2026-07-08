@@ -37,12 +37,12 @@
     <div class="card">
       <div class="card-header"><h2>Stock actual</h2></div>
       <div id="stock-loading" class="empty-state">
-        <div class="empty-icon">⏳</div><p>Cargando productos...</p>
+        <div class="empty-icon">⏳</div><p>Cargando...</p>
       </div>
       <div class="table-wrap">
         <table id="stock-table" class="hidden">
           <thead>
-            <tr><th>Producto</th><th>Unidad</th><th>Stock</th></tr>
+            <tr><th>Marca</th><th>Línea</th><th>Producto</th><th>Stock</th></tr>
           </thead>
           <tbody id="stock-tbody"></tbody>
         </table>
@@ -55,9 +55,9 @@
     <div class="card">
       <div class="card-header"><h2>Historial de movimientos</h2></div>
       <div class="form-row" style="margin-bottom:20px">
-        <div class="form-group">
-          <label>Producto</label>
-          <select id="hist-filtro-prod"><option value="">Todos</option></select>
+        <div class="form-group" style="max-width:180px">
+          <label>Marca</label>
+          <select id="hist-filtro-marca"><option value="">Todas</option></select>
         </div>
         <div class="form-group" style="max-width:160px">
           <label>Tipo</label>
@@ -74,6 +74,8 @@
           <thead>
             <tr>
               <th>Fecha / hora</th>
+              <th>Marca</th>
+              <th>Línea</th>
               <th>Producto</th>
               <th>Tipo</th>
               <th>Cantidad</th>
@@ -94,6 +96,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
+<script src="marcas.js"></script>
 <script src="visor.js"></script>
 </body>
 </html>
