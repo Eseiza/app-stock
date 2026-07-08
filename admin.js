@@ -1,23 +1,15 @@
-let currentUser      = null;
+if (!checkSesion('admin')) throw new Error('Sin acceso');
+
+const currentUser = getUsuario();
+document.getElementById('user-name').textContent   = currentUser;
+document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
+document.getElementById('btn-logout').addEventListener('click', logout);
+
 let productos        = [];
 let stockData        = {};
 let todosMovimientos = [];
 
-// ── AUTH GUARD ────────────────────────────────────────────────
-auth.onAuthStateChanged(async (user) => {
-  if (!user) { window.location.href = 'index.html'; return; }
-  const doc = await dbStock.collection('usuarios').doc(user.uid).get();
-  if (!doc.exists || doc.data().rol !== 'admin') {
-    await auth.signOut(); window.location.href = 'index.html'; return;
-  }
-  currentUser = { uid: user.uid, ...doc.data() };
-  document.getElementById('user-name').textContent   = currentUser.nombre;
-  document.getElementById('user-avatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
-  await cargarProductos();
-  iniciarListeners();
-});
-
-// ── TABS ───────────────────────────────────────────────────────
+// ── TABS ──────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -27,11 +19,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  await auth.signOut(); window.location.href = 'index.html';
-});
+// ── INIT ──────────────────────────────────────────────────────
+cargarProductos().then(iniciarListeners);
 
-// ── CARGAR PRODUCTOS (romero-env) ──────────────────────────────
 async function cargarProductos() {
   try {
     const snap = await dbEnvase.collection(COLECCION_PRODUCTOS).orderBy(CAMPO_NOMBRE).get();
@@ -66,7 +56,6 @@ function poblarSelects() {
   });
 }
 
-// ── CARGAR STOCK (appstock-a009e) ──────────────────────────────
 async function cargarStock() {
   const snap = await dbStock.collection('stock').get();
   stockData  = {};
@@ -78,7 +67,6 @@ async function cargarStock() {
 function renderStats() {
   const total    = productos.length;
   const sinStock = productos.filter(p => (stockData[p.id]?.cantidad ?? 0) <= 0).length;
-  const conStock = total - sinStock;
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-chip gold">
       <div class="stat-label">Productos</div>
@@ -86,7 +74,7 @@ function renderStats() {
     </div>
     <div class="stat-chip success">
       <div class="stat-label">Con stock</div>
-      <div class="stat-value">${conStock}</div>
+      <div class="stat-value">${total - sinStock}</div>
     </div>
     <div class="stat-chip danger">
       <div class="stat-label">Sin stock</div>
@@ -102,11 +90,11 @@ function renderStockTable() {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Sin productos</td></tr>'; return;
   }
   productos.forEach(p => {
-    const s   = stockData[p.id] || {};
-    const qty = s.cantidad ?? 0;
-    const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
+    const s     = stockData[p.id] || {};
+    const qty   = s.cantidad ?? 0;
+    const cls   = qty > 0 ? 'qty-ok' : 'qty-zero';
     const fecha = s.ultimaActualizacion ? fmt(s.ultimaActualizacion.toDate()) : '—';
-    const tr  = document.createElement('tr');
+    const tr    = document.createElement('tr');
     tr.innerHTML = `
       <td>
         <div class="product-name">${p.nombre}</div>
@@ -133,41 +121,32 @@ function renderStockTable() {
   document.getElementById('stock-table').classList.remove('hidden');
 }
 
-// ── AJUSTE MANUAL ──────────────────────────────────────────────
 window.ajustarStock = async function(productoId) {
-  const p      = productos.find(x => x.id === productoId);
-  const input  = document.getElementById('adj-' + productoId);
-  const cantidad = parseInt(input.value);
+  const p        = productos.find(x => x.id === productoId);
+  const cantidad = parseInt(document.getElementById('adj-' + productoId).value);
   if (isNaN(cantidad) || cantidad < 0) { showToast('Cantidad inválida'); return; }
-
   const ahora = firebase.firestore.Timestamp.fromDate(new Date());
   const batch = dbStock.batch();
-
   batch.set(dbStock.collection('stock').doc(productoId), {
-    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad,
-    cantidad, ultimaActualizacion: ahora
+    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo: 'ajuste',
-    cantidad, fecha: ahora,
-    usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
+    productoId, productoNombre: p.nombre, tipo: 'ajuste', cantidad, fecha: ahora,
+    usuario: currentUser
   });
   await batch.commit();
-
   stockData[productoId] = { nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad, ultimaActualizacion: ahora };
-  renderStockTable();
-  renderStats();
+  renderStockTable(); renderStats();
   showToast(`"${p.nombre}" → ${cantidad} ${p.unidad}`);
 };
 
-// ── REGISTRAR MOVIMIENTO ───────────────────────────────────────
+// ── MOVIMIENTO ────────────────────────────────────────────────
 document.getElementById('mov-producto').addEventListener('change', () => {
   const id  = document.getElementById('mov-producto').value;
   const div = document.getElementById('mov-stock-actual');
   if (!id) { div.classList.add('hidden'); return; }
   const p   = productos.find(x => x.id === id);
-  const qty = stockData[id]?.cantidad ?? 0;
-  div.textContent = `Stock actual de "${p.nombre}": ${qty} ${p.unidad}`;
+  div.textContent = `Stock actual de "${p.nombre}": ${stockData[id]?.cantidad ?? 0} ${p.unidad}`;
   div.classList.remove('hidden');
 });
 
@@ -179,12 +158,8 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   const okDiv      = document.getElementById('mov-ok');
   errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
-  if (!productoId) {
-    errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return;
-  }
-  if (!cantidad || cantidad <= 0) {
-    errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return;
-  }
+  if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
+  if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
 
   const p           = productos.find(x => x.id === productoId);
   const stockActual = stockData[productoId]?.cantidad ?? 0;
@@ -197,14 +172,11 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   const nuevoStock = tipo === 'entrada' ? stockActual + cantidad : stockActual - cantidad;
   const ahora      = firebase.firestore.Timestamp.fromDate(new Date());
   const batch      = dbStock.batch();
-
   batch.set(dbStock.collection('stock').doc(productoId), {
-    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad,
-    cantidad: nuevoStock, ultimaActualizacion: ahora
+    nombre: p.nombre, codigo: p.codigo, unidad: p.unidad, cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo, cantidad, fecha: ahora,
-    usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
+    productoId, productoNombre: p.nombre, tipo, cantidad, fecha: ahora, usuario: currentUser
   });
   await batch.commit();
 
@@ -217,21 +189,19 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   okDiv.classList.remove('hidden');
 });
 
-// ── HISTORIAL (tiempo real) ────────────────────────────────────
+// ── HISTORIAL ─────────────────────────────────────────────────
 function iniciarListeners() {
   dbStock.collection('movimientos').orderBy('fecha', 'desc').limit(300)
     .onSnapshot(snap => {
       todosMovimientos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderHistorial();
     });
-  dbStock.collection('usuarios')
-    .onSnapshot(snap => renderUsuarios(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 }
 
 function renderHistorial() {
-  const fp   = document.getElementById('hist-filtro-prod').value;
-  const ft   = document.getElementById('hist-filtro-tipo').value;
-  const rows = todosMovimientos.filter(m => {
+  const fp     = document.getElementById('hist-filtro-prod').value;
+  const ft     = document.getElementById('hist-filtro-tipo').value;
+  const rows   = todosMovimientos.filter(m => {
     if (fp && m.productoId !== fp) return false;
     if (ft && m.tipo !== ft) return false;
     return true;
@@ -249,7 +219,7 @@ function renderHistorial() {
       <td class="product-name">${m.productoNombre}</td>
       <td><span class="badge badge-${m.tipo}">${labels[m.tipo] || m.tipo}</span></td>
       <td style="font-weight:700">${m.cantidad}</td>
-      <td style="font-size:12.5px;color:var(--muted)">${m.usuarioNombre || '—'}</td>
+      <td style="font-size:12.5px;color:var(--muted)">${m.usuario || '—'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -257,57 +227,3 @@ function renderHistorial() {
 
 document.getElementById('hist-filtro-prod').addEventListener('change', renderHistorial);
 document.getElementById('hist-filtro-tipo').addEventListener('change', renderHistorial);
-
-// ── USUARIOS ───────────────────────────────────────────────────
-function renderUsuarios(usuarios) {
-  const tbody = document.getElementById('usr-tbody');
-  tbody.innerHTML = '';
-  if (!usuarios.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Sin usuarios</td></tr>'; return;
-  }
-  usuarios.forEach(u => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="product-name">${u.nombre}</td>
-      <td style="font-size:12.5px;color:var(--muted)">${u.email}</td>
-      <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="cambiarRol('${u.id}','${u.rol === 'admin' ? 'operador' : 'admin'}')">
-          → ${u.rol === 'admin' ? 'operador' : 'admin'}
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-window.cambiarRol = async function(uid, nuevoRol) {
-  await dbStock.collection('usuarios').doc(uid).update({ rol: nuevoRol });
-  showToast('Rol actualizado');
-};
-
-document.getElementById('btn-crear-usuario').addEventListener('click', async () => {
-  const nombre   = document.getElementById('usr-nombre').value.trim();
-  const email    = document.getElementById('usr-email').value.trim();
-  const password = document.getElementById('usr-password').value;
-  const rol      = document.getElementById('usr-rol').value;
-  const errDiv   = document.getElementById('usr-error');
-  errDiv.classList.add('hidden');
-
-  if (!nombre || !email || !password) {
-    errDiv.textContent = 'Completá todos los campos.'; errDiv.classList.remove('hidden'); return;
-  }
-
-  try {
-    // App temporal para no cerrar la sesión del admin actual
-    const appTemp  = firebase.initializeApp(firebaseConfigStock, 'temp_' + Date.now());
-    const authTemp = firebase.auth(appTemp);
-    const cred     = await authTemp.createUserWithEmailAndPassword(email, password);
-    await dbStock.collection('usuarios').doc(cred.user.uid).set({ nombre, email, rol });
-    await authTemp.signOut();
-    ['usr-nombre', 'usr-email', 'usr-password'].forEach(id => document.getElementById(id).value = '');
-    showToast(`Usuario "${nombre}" creado`);
-  } catch (e) {
-    errDiv.textContent = e.message; errDiv.classList.remove('hidden');
-  }
-});
