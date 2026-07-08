@@ -1,21 +1,13 @@
-let currentUser      = null;
+if (!checkSesion('visor')) throw new Error('Sin acceso');
+
+const currentUser = getUsuario();
+document.getElementById('user-name').textContent   = currentUser;
+document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
+document.getElementById('btn-logout').addEventListener('click', logout);
+
 let productos        = [];
 let stockData        = {};
 let todosMovimientos = [];
-
-auth.onAuthStateChanged(async (user) => {
-  if (!user) { window.location.href = 'index.html'; return; }
-  const doc = await dbStock.collection('usuarios').doc(user.uid).get();
-  if (!doc.exists) { await auth.signOut(); window.location.href = 'index.html'; return; }
-  const rol = doc.data().rol;
-  if (rol === 'admin') { window.location.href = 'admin.html'; return; }
-  if (rol === 'carga') { window.location.href = 'carga.html'; return; }
-  currentUser = { uid: user.uid, ...doc.data() };
-  document.getElementById('user-name').textContent   = currentUser.nombre;
-  document.getElementById('user-avatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
-  await cargarProductos();
-  iniciarListeners();
-});
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -26,9 +18,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  await auth.signOut(); window.location.href = 'index.html';
-});
+cargarProductos().then(iniciarListeners);
 
 async function cargarProductos() {
   try {
@@ -39,7 +29,6 @@ async function cargarProductos() {
       codigo: doc.data()[CAMPO_CODIGO] || '',
       unidad: doc.data()[CAMPO_UNIDAD] || ''
     }));
-    // Poblar filtro de historial
     const sel = document.getElementById('hist-filtro-prod');
     productos.forEach(p => {
       const opt = document.createElement('option');
@@ -97,9 +86,9 @@ function iniciarListeners() {
 }
 
 function renderHistorial() {
-  const fp   = document.getElementById('hist-filtro-prod').value;
-  const ft   = document.getElementById('hist-filtro-tipo').value;
-  const rows = todosMovimientos.filter(m => {
+  const fp     = document.getElementById('hist-filtro-prod').value;
+  const ft     = document.getElementById('hist-filtro-tipo').value;
+  const rows   = todosMovimientos.filter(m => {
     if (fp && m.productoId !== fp) return false;
     if (ft && m.tipo !== ft) return false;
     return true;
@@ -117,7 +106,7 @@ function renderHistorial() {
       <td class="product-name">${m.productoNombre}</td>
       <td><span class="badge badge-${m.tipo}">${labels[m.tipo] || m.tipo}</span></td>
       <td style="font-weight:700">${m.cantidad}</td>
-      <td style="font-size:12.5px;color:var(--muted)">${m.usuarioNombre || '—'}</td>
+      <td style="font-size:12.5px;color:var(--muted)">${m.usuario || '—'}</td>
     `;
     tbody.appendChild(tr);
   });
