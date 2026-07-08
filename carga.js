@@ -1,19 +1,12 @@
-let currentUser = null;
-let productos   = [];
-let stockData   = {};
+if (!checkSesion('carga')) throw new Error('Sin acceso');
 
-auth.onAuthStateChanged(async (user) => {
-  if (!user) { window.location.href = 'index.html'; return; }
-  const doc = await dbStock.collection('usuarios').doc(user.uid).get();
-  if (!doc.exists) { await auth.signOut(); window.location.href = 'index.html'; return; }
-  const rol = doc.data().rol;
-  if (rol === 'admin') { window.location.href = 'admin.html'; return; }
-  if (rol === 'visor') { window.location.href = 'visor.html'; return; }
-  currentUser = { uid: user.uid, ...doc.data() };
-  document.getElementById('user-name').textContent   = currentUser.nombre;
-  document.getElementById('user-avatar').textContent = currentUser.nombre.charAt(0).toUpperCase();
-  await cargarProductos();
-});
+const currentUser = getUsuario();
+document.getElementById('user-name').textContent   = currentUser;
+document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
+document.getElementById('btn-logout').addEventListener('click', logout);
+
+let productos = [];
+let stockData = {};
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -24,9 +17,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  await auth.signOut(); window.location.href = 'index.html';
-});
+cargarProductos();
 
 async function cargarProductos() {
   try {
@@ -90,8 +81,7 @@ document.getElementById('mov-producto').addEventListener('change', () => {
   const div = document.getElementById('mov-stock-actual');
   if (!id) { div.classList.add('hidden'); return; }
   const p   = productos.find(x => x.id === id);
-  const qty = stockData[id]?.cantidad ?? 0;
-  div.textContent = `Stock actual de "${p.nombre}": ${qty} ${p.unidad}`;
+  div.textContent = `Stock actual de "${p.nombre}": ${stockData[id]?.cantidad ?? 0} ${p.unidad}`;
   div.classList.remove('hidden');
 });
 
@@ -102,12 +92,8 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
   const okDiv      = document.getElementById('mov-ok');
   errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
 
-  if (!productoId) {
-    errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return;
-  }
-  if (!cantidad || cantidad <= 0) {
-    errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return;
-  }
+  if (!productoId) { errDiv.textContent = 'Seleccioná un producto.'; errDiv.classList.remove('hidden'); return; }
+  if (!cantidad || cantidad <= 0) { errDiv.textContent = 'Ingresá una cantidad válida.'; errDiv.classList.remove('hidden'); return; }
 
   const p           = productos.find(x => x.id === productoId);
   const stockActual = stockData[productoId]?.cantidad ?? 0;
@@ -126,8 +112,8 @@ document.getElementById('btn-registrar').addEventListener('click', async () => {
     cantidad: nuevoStock, ultimaActualizacion: ahora
   });
   batch.set(dbStock.collection('movimientos').doc(), {
-    productoId, productoNombre: p.nombre, tipo: 'salida', cantidad, fecha: ahora,
-    usuarioId: currentUser.uid, usuarioNombre: currentUser.nombre
+    productoId, productoNombre: p.nombre, tipo: 'salida',
+    cantidad, fecha: ahora, usuario: currentUser
   });
   await batch.commit();
 
