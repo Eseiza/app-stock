@@ -1,30 +1,29 @@
-// Si ya hay sesión activa, redirigir
-const sesionActiva = getSession();
-if (sesionActiva) {
-  const dest = sesionActiva.rol === 'admin' ? 'admin.html'
-             : sesionActiva.rol === 'carga' ? 'carga.html' : 'visor.html';
-  window.location.href = dest;
-}
+// ── USUARIOS ──────────────────────────────────────────────────
+const USUARIOS = [
+  { usuario: "admin", contrasena: "Admin.2026", rol: "admin", redirige: "./admin.html"    },
+  { usuario: "carga", contrasena: "Carga.2026", rol: "carga", redirige: "./carga.html"    },
+  { usuario: "visor", contrasena: "Visor.2026", rol: "visor", redirige: "./visor.html"    },
+];
 
 const btn = document.getElementById('btn-login');
 
 btn.addEventListener('click', () => {
-  const usuario  = document.getElementById('usuario').value.trim().toLowerCase();
-  const password = document.getElementById('password').value;
-  const err      = document.getElementById('error-msg');
+  const usuario   = document.getElementById('username').value.trim().toLowerCase();
+  const contrasena = document.getElementById('password').value;
+  const err        = document.getElementById('error-msg');
   err.classList.add('hidden');
 
-  const user = USUARIOS.find(u => u.usuario === usuario && u.password === password);
+  const match = USUARIOS.find(u => u.usuario === usuario && u.contrasena === contrasena);
 
-  if (!user) {
+  if (!match) {
     err.textContent = 'Usuario o contraseña incorrectos.';
     err.classList.remove('hidden');
     return;
   }
 
-  setSession(user);
-  window.location.href = user.rol === 'admin' ? 'admin.html'
-                       : user.rol === 'carga'  ? 'carga.html' : 'visor.html';
+  sessionStorage.setItem('usuario', match.usuario);
+  sessionStorage.setItem('rol', match.rol);
+  window.location.href = match.redirige;
 });
 
 document.getElementById('password').addEventListener('keydown', e => {
