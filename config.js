@@ -28,10 +28,25 @@ const appEnvase = firebase.initializeApp(firebaseConfigEnvase, "envase");
 const appStock  = firebase.initializeApp(firebaseConfigStock, "stock");
 const dbEnvase  = firebase.firestore(appEnvase);
 const dbStock   = firebase.firestore(appStock);
-const auth      = firebase.auth(appStock);
+
+// ── Auth guard por sessionStorage ──────────────────────────
+function checkSesion(rolRequerido) {
+  const rol = sessionStorage.getItem('rol');
+  if (!rol) { window.location.href = 'index.html'; return false; }
+  if (rolRequerido && rol !== rolRequerido) { window.location.href = 'index.html'; return false; }
+  return true;
+}
+
+function getUsuario() {
+  return sessionStorage.getItem('usuario');
+}
+
+function logout() {
+  sessionStorage.clear();
+  window.location.href = 'index.html';
+}
 
 // ── Utilidades comunes ──────────────────────────────────────
-
 function fmt(date) {
   return date.toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
