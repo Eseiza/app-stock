@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Romero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Lora:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-chip"><img src="https://www.romeropanificados.com.ar/wp-content/uploads/2023/01/Recurso-8.png" alt="Romero Panificados" class="login-logo"></div>
+    </div>
+    <div class="field">
+      <label for="role">Seleccioná tu rol</label>
+      <select id="role">
+        <option value="" disabled selected>-- Seleccioná un rol --</option>
+        <option value="admin">🔑 Admin</option>
+        <option value="operario">⚙️ Operario</option>
+        <option value="visor">👁️ Visor</option>
+        <option value="ventas">📊 Ventas</option>
+      </select>
+    </div>
+    <div id="credenciales" class="credenciales hidden">
+      <div class="field">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" placeholder="Tu usuario" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn-login" id="btn-login">Iniciar Sesión</button>
+    </div>
+    <div id="error-msg" class="alert alert-error hidden"></div>
+  </div>
+  <div class="login-tagline"><span>TI 2026</span></div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="js/core/config.js"></script>
+<script src="js/pages/login.js"></script>
+</body>
+</html>
