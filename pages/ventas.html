@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Romero · Ventas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../css/tokens.css"><link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">
+    <img class="brand-logo" src="https://www.romeropanificados.com.ar/wp-content/uploads/2023/01/Recurso-8.png" alt="Romero Panificados">
+    <h1>Stock Romero</h1>
+  </div>
+  <div class="navbar-right">
+    <div class="user-pill">
+      <div class="user-avatar" id="user-avatar">–</div>
+      <div>
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role">Ventas</div>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">Salir</button>
+  </div>
+</nav>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
+  
+</div>
+
+<div class="content">
+
+  <!-- STOCK -->
+  <div class="tab-panel active" id="tab-stock">
+    <div class="card">
+      <div class="card-header"><h2>Stock actual</h2></div>
+      <div id="stock-loading" class="empty-state">
+        <div class="empty-icon">⏳</div><p>Cargando...</p>
+      </div>
+      <div class="table-wrap">
+        <table id="stock-table" class="hidden">
+          <thead>
+            <tr><th>Marca</th><th>Línea</th><th>Producto</th><th>Stock</th></tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="../js/core/config.js"></script>
+<script src="../js/core/marcas.js"></script>
+<script src="../js/core/stock-core.js"></script>
+<script src="../js/core/sincronizacion.js"></script>
+<script src="../js/pages/ventas.js"></script><script src="../js/ui/ui.js"></script>
+</body>
+</html>

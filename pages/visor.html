@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Romero · Admin</title>
+  <title>Stock Romero · Visor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../css/tokens.css"><link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/components.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
       <div class="user-avatar" id="user-avatar">–</div>
       <div>
         <div class="user-name" id="user-name"></div>
-        <div class="user-role">Admin</div>
+        <div class="user-role">Visor</div>
       </div>
     </div>
     <button class="btn-logout" id="btn-logout">Salir</button>
@@ -27,83 +27,26 @@
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
-  <button class="tab-btn" data-tab="movimiento">↕ Movimiento</button>
   <button class="tab-btn" data-tab="historial">🕓 Historial</button>
-  <button class="tab-btn" data-tab="usuarios">👥 Usuarios</button>
 </div>
 
 <div class="content">
 
-  <!-- STOCK ACTUAL -->
+  <!-- STOCK -->
   <div class="tab-panel active" id="tab-stock">
-    <div id="stats-row" class="stats-row"></div>
-    <div class="form-row stock-search-row"><div class="form-group"><label>Buscar producto</label><input id="stock-busqueda" type="search" placeholder="Marca, línea o producto..."></div></div>
     <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>Stock actual</h2>
-          <div id="brand-summary" class="brand-summary"></div>
-          <div class="card-sub">Los ajustes manuales quedan registrados en el historial</div>
-        </div>
-      </div>
+      <div class="card-header"><h2>Stock actual</h2></div>
       <div id="stock-loading" class="empty-state">
         <div class="empty-icon">⏳</div><p>Cargando...</p>
       </div>
       <div class="table-wrap">
         <table id="stock-table" class="hidden">
           <thead>
-            <tr>
-              <th>Marca</th>
-              <th>Línea</th>
-              <th>Producto</th>
-              <th>Stock</th>
-              <th>Ubicación</th>
-              <th>Última actualización</th>
-              <th>Ajuste manual</th>
-            </tr>
+            <tr><th>Marca</th><th>Línea</th><th>Producto</th><th>Stock</th></tr>
           </thead>
           <tbody id="stock-tbody"></tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- MOVIMIENTO -->
-  <div class="tab-panel" id="tab-movimiento">
-    <div class="card">
-      <div class="card-header"><h2>Registrar movimiento</h2></div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Marca</label>
-          <select id="mov-marca"><option value="">Seleccioná marca...</option></select>
-        </div>
-        <div class="form-group">
-          <label>Línea</label>
-          <select id="mov-linea"><option value="">Seleccioná línea...</option></select>
-        </div>
-        <div class="form-group">
-          <label>Producto</label>
-          <select id="mov-producto"><option value="">Seleccioná producto...</option></select>
-        </div>
-        <div class="form-group">
-          <label>Tipo</label>
-          <select id="mov-tipo">
-            <option value="entrada">↑ Entrada</option>
-            <option value="salida">↓ Salida</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Cantidad</label>
-          <input type="number" id="mov-cantidad" min="1" placeholder="0" />
-        </div>
-        <div class="form-group" style="flex:0;min-width:auto">
-          <label style="opacity:0">_</label>
-          <button class="btn btn-primary" id="btn-registrar">Registrar</button>
-        </div>
-      </div>
-      <div id="mov-stock-actual" class="alert alert-info hidden"></div>
-      <div id="mov-error"        class="alert alert-error hidden"></div>
-      <div id="mov-ok"           class="alert alert-ok hidden"></div>
     </div>
   </div>
 
@@ -146,21 +89,6 @@
     </div>
   </div>
 
-  <!-- USUARIOS (solo lectura) -->
-  <div class="tab-panel" id="tab-usuarios">
-    <div class="card">
-      <div class="card-header"><h2>Usuarios</h2></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Usuario</th><th>Rol</th></tr>
-          </thead>
-          <tbody id="usr-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <div class="toast" id="toast"></div>
@@ -171,6 +99,6 @@
 <script src="../js/core/marcas.js"></script>
 <script src="../js/core/stock-core.js"></script>
 <script src="../js/core/sincronizacion.js"></script>
-<script src="../js/pages/admin.js"></script><script src="../js/ui/ui.js"></script>
+<script src="../js/pages/visor.js"></script><script src="../js/ui/ui.js"></script>
 </body>
 </html>
