@@ -8,6 +8,7 @@ document.getElementById('btn-logout').addEventListener('click', logout);
 let stockData = {};
 let todosMovimientos = [];
 let filtroStock = '';
+let editorStock = null;
 
 // Navegación
 
@@ -28,6 +29,7 @@ escucharStock(data => {
   renderStats();
   renderResumenMarcas();
   actualizarStockSeleccionado();
+  editorStock?.refrescar();
 });
 
 iniciarSincronizacionRomero();
@@ -47,7 +49,7 @@ function actualizarStockSeleccionado() {
   const key = getKey();
   const div = document.getElementById('mov-stock-actual');
   if (!key) return div.classList.add('hidden');
-  div.textContent = `Stock actual: ${Number(stockData[key]?.cantidad || 0)} bandejas`;
+  div.textContent = `Stock actual: ${formatearStock(stockData[key])}`;
   div.classList.remove('hidden');
 }
 
@@ -63,19 +65,6 @@ function renderResumenMarcas() {
   });
   cont.innerHTML = Object.entries(totales).map(([marca, total]) =>
     `<span class="brand-chip"><strong>${escaparHTML(marca)}</strong> ${total} bandejas</span>`).join('');
-}
-
-async function guardarUbicacionUI(key) {
-  const [marca, linea, producto] = key.split('|');
-  const fila = document.querySelector(`[data-fila-key="${CSS.escape(key)}"]`)?.value || '';
-  const torre = document.querySelector(`[data-torre-key="${CSS.escape(key)}"]`)?.value || '';
-  try {
-    await guardarUbicacion({ marca, linea, producto, fila, torre, usuario: currentUser });
-    showToast(`Ubicación guardada: fila ${fila || '—'}, torre ${torre || '—'}`);
-  } catch (e) {
-    console.error(e);
-    showToast('No se pudo guardar la ubicación', true);
-  }
 }
 
 const buscadorStock = document.getElementById('stock-busqueda');
@@ -108,7 +97,6 @@ let renderStockPendiente = false;
 
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
-  // Si estás escribiendo en una fila, no la redibujamos hasta que salgas del campo.
   const activo = document.activeElement;
   if (activo && activo.tagName === 'INPUT' && tbody.contains(activo)) {
     renderStockPendiente = true;
@@ -118,28 +106,21 @@ function renderStockTable() {
   tbody.innerHTML = '';
   const termino = normalizarTexto(filtroStock);
   todosLosProductos()
-    .filter(({ marca, linea, producto }) => !termino ||
-      normalizarTexto(`${marca} ${linea} ${producto}`).includes(termino))
+    .filter(({ marca, linea, producto }) => !termino || normalizarTexto(`${marca} ${linea} ${producto}`).includes(termino))
     .forEach(({ marca, linea, producto, key }) => {
       const s = stockData[key] || {};
       const qty = Number(s.cantidad || 0);
-      const cls = qty > 0 ? 'qty-ok' : 'qty-zero';
-      const fila = s.ubicacion?.fila || '';
-      const torre = s.ubicacion?.torre || '';
+      const paquetes = Number(s.paquetesSueltos || 0);
+      const cls = qty > 0 || paquetes > 0 ? 'qty-ok' : 'qty-zero';
       const k = escaparHTML(key);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escaparHTML(marca)}</td><td>${escaparHTML(linea)}</td><td class="product-name">${escaparHTML(producto)}</td>
-        <td><div class="qty-display ${cls}"><span class="qty-number">${qty}</span><span class="qty-unit">bandejas</span></div></td>
-        <td>
-          <div class="adj-row">
-            <input class="adj-input" style="max-width:70px" value="${escaparHTML(fila)}" placeholder="Fila" data-fila-key="${k}">
-            <input class="adj-input" style="max-width:70px" value="${escaparHTML(torre)}" placeholder="Torre" data-torre-key="${k}">
-            <button class="btn btn-sm" data-action="ubicacion" data-key="${k}">Guardar</button>
-          </div>
-        </td>
+        <td>${escaparHTML(marca)}</td>
+        <td>${escaparHTML(linea)}</td>
+        <td class="product-name">${escaparHTML(producto)}</td>
+        <td><div class="qty-display ${cls}">${formatearStockHTML(s)}</div></td>
         <td class="cell-muted">${s.ultimaActualizacion ? fmt(s.ultimaActualizacion) : '—'}</td>
-        <td><div class="adj-row"><input type="number" class="adj-input" min="0" value="${qty}" data-ajuste-key="${k}"/><button class="btn btn-gold btn-sm" data-action="ajustar" data-key="${k}">Aplicar</button></div></td>`;
+        <td><button class="btn btn-sm btn-gold" data-action="editar" data-key="${k}">✎ Editar</button></td>`;
       tbody.appendChild(tr);
     });
   document.getElementById('stock-loading').classList.add('hidden');
@@ -147,30 +128,11 @@ function renderStockTable() {
 }
 
 const stockTbody = document.getElementById('stock-tbody');
+editorStock = initEditorStock({ getStock: () => stockData, usuario: currentUser, origen: 'admin' });
 stockTbody.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-action]');
-  if (!btn) return;
-  if (btn.dataset.action === 'ubicacion') guardarUbicacionUI(btn.dataset.key);
-  if (btn.dataset.action === 'ajustar') ajustarStockUI(btn.dataset.key);
+  const btn = e.target.closest('button[data-action="editar"]');
+  if (btn) editorStock.abrir(btn.dataset.key);
 });
-stockTbody.addEventListener('focusout', () => setTimeout(() => {
-  if (renderStockPendiente && !stockTbody.contains(document.activeElement)) renderStockTable();
-}, 0));
-
-// Carga inicial / ajuste manual: exclusivo del Admin.
-async function ajustarStockUI(key) {
-  const input = document.querySelector(`[data-ajuste-key="${CSS.escape(key)}"]`);
-  const cantidad = Number(input?.value);
-  if (!Number.isInteger(cantidad) || cantidad < 0) return showToast('Cantidad inválida', true);
-  const [marca, linea, producto] = key.split('|');
-  try {
-    await ajustarStock({ marca, linea, producto, cantidad, usuario: currentUser });
-    showToast(`Stock de ${producto} ajustado a ${cantidad} bandejas`);
-  } catch (e) {
-    console.error(e);
-    showToast('No se pudo ajustar el stock', true);
-  }
-}
 
 // Movimiento manual del Admin.
 document.getElementById('btn-registrar').addEventListener('click', async () => {
@@ -210,7 +172,7 @@ function renderHistorial() {
       <td>${escaparHTML(m.marca || '—')}</td><td>${escaparHTML(m.linea || '—')}</td>
       <td class="product-name">${escaparHTML(m.producto || '—')}</td>
       <td><span class="badge badge-${escaparHTML(m.tipo)}">${escaparHTML(labels[m.tipo] || m.tipo)}</span></td>
-      <td style="font-weight:700">${escaparHTML(m.cantidad)}</td>
+      <td style="font-weight:700">${escaparHTML(formatearDetalleAjuste(m) || m.cantidad)}</td>
       <td class="cell-muted">${escaparHTML(m.usuario || m.origen || '—')}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="empty-row">Sin movimientos</td></tr>';
 }
@@ -224,7 +186,7 @@ function renderUsuarios() {
   if (!tbody) return;
   tbody.innerHTML = [
     ['admin', 'ADMIN', 'Acceso total'],
-    ['operario', 'OPERARIO', 'Salidas y movimientos'],
+    ['operario', 'OPERARIO', 'Salidas, movimientos y edición de stock'],
     ['visor', 'VISOR', 'Stock + movimientos'],
     ['ventas', 'VENTAS', 'Solo stock disponible']
   ].map(u => `<tr><td>${u[0]}</td><td>${u[1]}</td><td>${u[2]}</td></tr>`).join('');
