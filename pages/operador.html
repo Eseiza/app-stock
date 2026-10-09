@@ -18,16 +18,19 @@
 <div class="tabs">
   <button class="tab-btn active" data-tab="stock">📋 Stock actual</button>
   <button class="tab-btn" data-tab="salida">↓ Registrar salida</button>
+  <button class="tab-btn" data-tab="historial">🕓 Historial</button>
 </div>
 
 <div class="content">
   <div class="tab-panel active" id="tab-stock">
+    <div id="stats-row" class="stats-row"></div>
+    <div class="form-row stock-search-row"><div class="form-group"><label>Buscar producto</label><input id="stock-busqueda" type="search" placeholder="Marca, línea o producto..."></div></div>
     <div class="card">
-      <div class="card-header"><h2>Stock actual</h2></div>
+      <div class="card-header"><div><h2>Stock actual</h2><div id="brand-summary" class="brand-summary"></div></div></div>
       <div id="stock-loading" class="empty-state"><div class="empty-icon">⏳</div><p>Cargando productos...</p></div>
       <div class="table-wrap">
         <table id="stock-table" class="hidden">
-          <thead><tr><th>Marca</th><th>Línea</th><th>Producto</th><th>Stock</th></tr></thead>
+          <thead><tr><th>Marca</th><th>Línea</th><th>Producto</th><th>Stock</th><th>Última actualización</th><th></th></tr></thead>
           <tbody id="stock-tbody"></tbody>
         </table>
       </div>
@@ -49,10 +52,50 @@
       <div id="mov-ok" class="alert alert-ok hidden"></div>
     </div>
   </div>
+
+  <div class="tab-panel" id="tab-historial">
+    <div id="hist-stats" class="stats-row"></div>
+    <div class="card">
+      <div class="card-header"><h2>Historial de movimientos</h2></div>
+      <div class="form-row" style="margin-bottom:20px">
+        <div class="form-group"><label>Buscar producto</label><input id="hist-busqueda" type="search" placeholder="Marca, línea o producto..."></div>
+        <div class="form-group"><label>Marca</label><select id="hist-filtro-marca"><option value="">Todas</option></select></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="hist-filtro-tipo">
+            <option value="">Todos</option>
+            <option value="produccion">Producción</option>
+            <option value="entrada">Entrada</option>
+            <option value="salida">Salida</option>
+            <option value="ajuste">Ajuste</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Usuario</label>
+          <select id="hist-filtro-usuario">
+            <option value="">Todos</option>
+            <option value="mios">Solo los míos</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Período</label>
+          <select id="hist-filtro-periodo">
+            <option value="">Todo</option>
+            <option value="hoy">Hoy</option>
+            <option value="7">Últimos 7 días</option>
+            <option value="30">Últimos 30 días</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fecha / hora</th><th>Marca</th><th>Línea</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Stock anterior</th><th>Stock final</th><th>Usuario</th><th>Origen</th></tr></thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="../js/core/config.js"></script><script src="../js/core/marcas.js"></script><script src="../js/core/stock-core.js"></script><script src="../js/core/sincronizacion.js"></script><script src="../js/pages/operador.js"></script><script src="../js/ui/ui.js"></script>
+<script src="../js/core/config.js"></script><script src="../js/core/marcas.js"></script><script src="../js/core/stock-core.js"></script><script src="../js/core/sobrantes-stock.js"></script><script src="../js/core/sincronizacion.js"></script><script src="../js/ui/editor-stock.js"></script><script src="../js/pages/operador.js"></script><script src="../js/ui/ui.js"></script>
 </body>
 </html>
