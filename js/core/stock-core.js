@@ -75,51 +75,6 @@ async function moverStock({ marca, linea, producto, tipo, cantidad, usuario, ori
   return stockFinal;
 }
 
-async function ajustarStock({ marca, linea, producto, delta, usuario }) {
-  const cambio = Number(delta);
-  if (!Number.isInteger(cambio) || cambio === 0) {
-    throw new Error('El ajuste debe ser un número entero distinto de 0.');
-  }
-
-  const ref = refStockProducto(marca, linea, producto);
-  let stockAnterior = 0;
-  let stockFinal = 0;
-
-  const resultado = await ref.transaction(actual => {
-    const actualData = actual && typeof actual === 'object' ? actual : {};
-    stockAnterior = Number(actualData.cantidad || 0);
-    const nuevo = stockAnterior + cambio;
-    if (nuevo < 0) return;
-    return {
-      ...actualData,
-      marca, linea, producto,
-      cantidad: nuevo,
-      paquetesSueltos: Number(actualData.paquetesSueltos || 0),
-      ultimaActualizacion: timestampAhora()
-    };
-  });
-
-  if (!resultado.committed) {
-    throw new Error(cambio < 0
-      ? 'No se puede restar más bandejas de las disponibles.'
-      : 'No se pudo ajustar el stock. Actualizá la pantalla e intentá nuevamente.');
-  }
-
-  stockFinal = Number(resultado.snapshot.val()?.cantidad || 0);
-  await registrarMovimiento({
-    marca, linea, producto,
-    tipo: 'ajuste',
-    cantidad: Math.abs(cambio),
-    usuario,
-    origen: 'admin',
-    stockAnterior,
-    stockFinal,
-    delta: cambio
-  });
-
-  return stockFinal;
-}
-
 // Ajuste manual detallado: suma o resta filas, bandejas y paquetes en una sola operación.
 // Todo se convierte a paquetes totales, se aplica en una transaction y se vuelve a
 // repartir en bandejas completas + paquetes sueltos.
@@ -209,20 +164,6 @@ function formatearDetalleAjuste(m) {
   if (d.bandejas) partes.push(`${sg}${d.bandejas} bandeja${d.bandejas === 1 ? '' : 's'}`);
   if (d.paquetes) partes.push(`${sg}${d.paquetes} paquete${d.paquetes === 1 ? '' : 's'}`);
   return partes.join(', ');
-}
-
-// Devuelve una instantánea del stock de un producto. Se usa para validaciones
-// y para evitar que cada pantalla implemente su propia lectura.
-async function obtenerStockProducto(marca, linea, producto) {
-  const snap = await refStockProducto(marca, linea, producto).once('value');
-  return snap.val() || { marca, linea, producto, cantidad: 0 };
-}
-
-// Escucha solo un producto cuando una pantalla necesita una actualización puntual.
-function escucharStockProducto(marca, linea, producto, callback) {
-  return refStockProducto(marca, linea, producto).on('value', snap => {
-    callback(snap.val() || { marca, linea, producto, cantidad: 0 });
-  });
 }
 
 function todosLosProductos() {
