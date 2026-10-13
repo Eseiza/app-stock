@@ -1,6 +1,6 @@
 // Acceso temporal del prototipo. Antes de producción se reemplazará por Firebase Auth.
 const USUARIOS = [
-  { usuario: 'admin',   contrasena: 'cin>>Eseiza07;',   rol: 'admin',   redirige: 'pages/admin.html' },
+  { usuario: 'admin',   contrasena: 'cin>>Eszenay7;',   rol: 'admin',   redirige: 'pages/admin.html' },
   { usuario: 'operario',contrasena: 'Operario.2026',rol: 'operario',redirige: 'pages/operador.html' },
   { usuario: 'visor',   contrasena: 'Visor.2026',   rol: 'visor',   redirige: 'pages/visor.html' },
   { usuario: 'ventas',  contrasena: 'Ventas.2026',  rol: 'ventas',  redirige: 'pages/ventas.html' }
