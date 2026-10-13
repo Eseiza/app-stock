@@ -172,7 +172,6 @@ function actualizarStockSeleccionado() {
     div.classList.add('hidden');
     return;
   }
-  const actual = Number(stockData[key]?.cantidad || 0);
   div.textContent = `Stock disponible: ${formatearStock(stockData[key])}`;
   div.classList.remove('hidden');
 }
