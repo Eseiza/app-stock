@@ -93,16 +93,8 @@ function renderStats() {
   `;
 }
 
-let renderStockPendiente = false;
-
 function renderStockTable() {
   const tbody = document.getElementById('stock-tbody');
-  const activo = document.activeElement;
-  if (activo && activo.tagName === 'INPUT' && tbody.contains(activo)) {
-    renderStockPendiente = true;
-    return;
-  }
-  renderStockPendiente = false;
   tbody.innerHTML = '';
   const termino = normalizarTexto(filtroStock);
   todosLosProductos()
@@ -192,3 +184,4 @@ function renderUsuarios() {
   ].map(u => `<tr><td>${u[0]}</td><td>${u[1]}</td><td>${u[2]}</td></tr>`).join('');
 }
 renderUsuarios();
+s
