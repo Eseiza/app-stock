@@ -125,3 +125,14 @@ body.modal-open{overflow:hidden}
  .form-row{gap:14px}.stock-search-row .form-group{max-width:none}
  .stepper{max-width:none}.form-group .btn{width:100%}
 }
+
+/* MANTENIMIENTO */
+.mant-lista{display:flex;flex-direction:column;gap:10px}
+.mant-opcion{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;transition:border-color .2s}
+.mant-opcion:hover{border-color:var(--red-line)}
+.mant-opcion input{flex:none;width:20px;height:20px;accent-color:var(--red);cursor:pointer}
+.mant-texto{flex:1;display:flex;flex-direction:column;gap:2px}
+.mant-texto small{color:var(--muted);font-size:12px}
+.mant-confirmar{margin-top:18px;max-width:320px}
+.mant-acciones{margin-top:18px}
+@media(max-width:720px){.mant-confirmar{max-width:none}.mant-acciones .btn{width:100%}.mant-opcion{flex-wrap:wrap}}
