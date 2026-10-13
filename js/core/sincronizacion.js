@@ -34,7 +34,7 @@ function fechaDePushId(id) {
 
 async function obtenerInicioSincronizacion() {
   const ref = dbStock.ref(RUTA_INICIO);
-  const res = await ref.transaction(actual => (Number.isFinite(Number(actual)) && Number(actual) > 0 ? undefined : Date.now()));
+  await ref.transaction(actual => (Number.isFinite(Number(actual)) && Number(actual) > 0 ? undefined : Date.now()));
   const snap = await ref.once('value');
   return Number(snap.val()) || Date.now();
 }
@@ -42,10 +42,6 @@ async function obtenerInicioSincronizacion() {
 let sincronizacionActiva = false;
 const fechasObservadas = new Set();
 const tareasObservadas = new Set();
-
-function idSeguro(id) {
-  return String(id).replace(/[.#$\[\]/]/g, '_');
-}
 
 function esTareaValida(data) {
   if (!data || typeof data !== 'object') return false;
@@ -102,7 +98,7 @@ async function procesarTarea(fechaKey, idTarea, data) {
     });
     if (r.aplicado) console.info('[AppStock] Sobrante registrado por el respaldo:', datos);
   } catch (error) {
-    await dbStock.ref(`${RUTA_SYNC}/${idSeguro(idTarea)}`).update({
+    await dbStock.ref(`${RUTA_SYNC}/${idSeguroSync(idTarea)}`).update({
       estado: 'error',
       error: String(error.message || error),
       actualizado: Date.now(),
