@@ -5,9 +5,7 @@ const RAIZ = location.pathname.includes('/pages/') ? '../' : '';
 // app-stock: LECTURA / ESCRITURA (Realtime Database)
 // ============================================================
 
-const COLECCION_PRODUCTOS = 'productos'; // compatibilidad con código anterior
-
-// Datos que llegan desde romero-env/tareas.
+// Datos que llegan desde romero-env/historial/{fecha}/sobrantes/{id}.
 const CAMPO_MARCA = 'marca';
 const CAMPO_LINEA = 'linea';
 const CAMPO_PRODUCTO = 'producto';
@@ -107,8 +105,4 @@ function buscarProductoCatalogo(marca, linea, producto) {
 
 function claveProducto(marca, linea, producto) {
   return [marca, linea, producto].join('|');
-}
-
-function obtenerRefStock(marca, linea, producto) {
-  return dbStock.ref(`stock/${claveProducto(marca, linea, producto)}`);
 }
